@@ -1,7 +1,7 @@
 # CONTEXT.md — spanishstore
 
 > Documento vivo del proyecto. Revisar **antes** de cualquier cambio importante y actualizar **después** de cada avance.
-> Última actualización: 2026-10-27
+> Última actualización: 2026-11-05
 
 ## 1. Resumen del proyecto
 - **Nombre:** spanishstore
@@ -542,6 +542,7 @@ La CLI solo sincroniza las carpetas del tema. `README.md`, `LICENSE.md` y otros 
 - Ojo: Edge headless tiene un ancho mínimo de ventana de unos 500 px, así que las capturas a 375 px salen recortadas. Para móvil, usar la emulación del navegador.
 
 ### Otras notas
+- **Repositorio:** https://github.com/Bryandlc654/spanishstore-shopify (rama `main`). Incluye el tema, `CONTEXT.md`, `CLAUDE.md` y `contenido/` (también el catálogo del cliente). La CLI de Shopify no usa el repositorio: los cambios se siguen subiendo a la tienda con `shopify theme push`
 - Al instalar la CLI, npm muestra un aviso de que la dependencia `boolean@3.2.0` está obsoleta. No afecta al funcionamiento.
 
 ## 9. Historial de sesiones
@@ -633,3 +634,4 @@ La CLI solo sincroniza las carpetas del tema. `README.md`, `LICENSE.md` y otros 
 - **2026-10-19** — FAQ con apertura/cierre animados (`assets/accordion.js`, altura + fundido de la respuesta, icono con media vuelta) en la sección FAQ y en la página FAQ. Entrada tipo hero para la primera sección de colección, búsqueda, ficha, blog, artículo, contacto, carrito, FAQ, 404 y páginas simples. Probado en el navegador (abrir, cerrar, interrumpir, filtro del FAQ; animaciones asignadas en cada página a 1440 y 375 px; pulso conservado; sin scroll horizontal). Detectado y corregido: en móvil el botón de compra perdía el pulso. `theme dev` reiniciado (redirigía a /password). Theme Check: 83 archivos, 0 avisos.
 - **2026-10-20** — Buscador: corregido el desplazamiento de la página al escribir (scroll-padding → scroll-margin) y animaciones más rápidas (cascada solo al abrir). Mega menú de Gift sets: titular ya no se corta (altura mínima 19 rem). Escala fluida desde 1440 px (16 px → ~21 px a 1920, máx. 22 px) y ajustes px de Personalizar (alturas de hero/banners/collage/imagen+texto, logo, separaciones, margen de página) servidos en rem. Comprobado a 375, 1280, 1440, 1920 y 2560 px (sin scroll horizontal; 375–1440 sin cambios; a 1920 el contenido mide 1760 px y el menú sigue en una línea). Theme Check: 83 archivos, 0 avisos.
 - **2026-10-27** — Catálogo: analizadas las 15 listas de productos del cliente (T1 2026, 218 referencias, sin precios ni fotos) y unidas en `contenido/productos/shopify-productos.csv` (189 productos con variantes, 10 categorías con subcategorías, metacampos, taxonomía de Shopify, etiquetas, pesos, todo en borrador) + `revision-productos.xlsx` con la correspondencia y las dudas. Comprobado que cada referencia aparece una sola vez y que los totales cuadran
+- **2026-11-05** — Proyecto subido a GitHub (`Bryandlc654/spanishstore-shopify`, rama `main`, primer commit con 165 archivos). Explicado cómo llevar el tema a otra tienda de Shopify (transferir la propiedad o `theme pull` + `theme push --unpublished --store` a la nueva, y lo que no viaja con el tema)
