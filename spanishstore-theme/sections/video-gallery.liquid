@@ -1,0 +1,168 @@
+{% comment %}
+  Galería de vídeos de la comunidad (UGC) en carrusel.
+  Cada vídeo es un bloque con imagen de portada y un vídeo subido a Shopify
+  o un enlace de YouTube/Vimeo. Al pulsar el botón de play, el vídeo se reproduce
+  dentro de la tarjeta y se pausa cualquier otro (snippet compartido snippets/video-card.liquid).
+  - Desktop: 4 tarjetas 7:10 visibles (configurable) con flechas.
+  - Móvil/tablet: scroll táctil (carrusel compartido de snippets/carousel-arrows.liquid).
+    Móvil (diseño del usuario): título y subtítulo centrados (22 px / 18 px fino), una tarjeta grande
+    (302 px a 375: la siguiente asoma 41 px) y puntos debajo (snippets/carousel-dots.liquid).
+  Sin portada se usa la imagen de vista previa del vídeo y, si tampoco hay, un placeholder.
+{% endcomment %}
+
+<div class="video-gallery full-width">
+  {%- if section.settings.heading != blank or section.settings.subheading != blank -%}
+    <div class="section-header">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="section-header__heading">{{ section.settings.heading | escape }}</h2>
+      {%- endif -%}
+      {%- if section.settings.subheading != blank -%}
+        <p class="section-header__subheading">{{ section.settings.subheading | escape }}</p>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  <carousel-slider
+    class="carousel"
+    style="--carousel-columns: {{ section.settings.columns }}; --carousel-media-ratio: 1.4286; --carousel-peek-mobile: 1.07;"
+  >
+    <ul class="carousel__track" role="list" data-carousel-track>
+      {%- for block in section.blocks -%}
+        {%- liquid
+          assign video_label = block.settings.title | default: section.settings.heading
+          # Portadas por defecto (assets/video-cover-1…4.jpg) para los 4 primeros vídeos
+          assign default_cover = blank
+          if forloop.index <= 4
+            assign default_cover = 'video-cover-' | append: forloop.index | append: '.jpg' | asset_url
+          endif
+        -%}
+        <li class="carousel__slide" {{ block.shopify_attributes }}>
+          {%- render 'video-card',
+            video: block.settings.video,
+            video_url: block.settings.video_url,
+            cover: block.settings.cover,
+            cover_url: default_cover,
+            label: video_label,
+            placeholder_index: forloop.index0
+          -%}
+        </li>
+      {%- endfor -%}
+    </ul>
+
+    {%- if section.settings.show_arrows -%}
+      {%- render 'carousel-arrows' -%}
+    {%- endif -%}
+    {%- render 'carousel-dots', count: section.blocks.size -%}
+  </carousel-slider>
+</div>
+
+{% stylesheet %}
+  .video-gallery {
+    padding-block: 2.5rem;
+  }
+
+  @media (max-width: 749px) {
+    .video-gallery .section-header {
+      justify-content: center;
+      row-gap: 0;
+      margin-block-end: 1.375rem;
+      text-align: center;
+    }
+
+    .video-gallery .section-header__heading {
+      font-size: 1.375rem;
+      line-height: 1.2;
+    }
+
+    .video-gallery .section-header__subheading {
+      margin-block-start: 0.25rem;
+      font-size: 1.125rem;
+      font-weight: 300;
+      line-height: 1.25;
+      text-wrap: wrap;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .video-gallery {
+      padding-block: 3rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.video_gallery",
+  "tag": "section",
+  "class": "video-gallery-section",
+  "max_blocks": 12,
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Spanish flavors, real moments."
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "t:labels.subheading",
+      "default": "See what our community brings to the table."
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "t:labels.columns_desktop",
+      "min": 3,
+      "max": 5,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "checkbox",
+      "id": "show_arrows",
+      "label": "t:labels.show_arrows",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "video",
+      "name": "t:general.video",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "cover",
+          "label": "t:labels.cover_image",
+          "info": "t:info.cover_image"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "t:labels.video",
+          "info": "t:info.video_upload"
+        },
+        {
+          "type": "video_url",
+          "id": "video_url",
+          "label": "t:labels.video_url",
+          "accept": ["youtube", "vimeo"],
+          "info": "t:info.video_url"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:labels.video_title",
+          "info": "t:info.video_title"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.video_gallery",
+      "blocks": [{ "type": "video" }, { "type": "video" }, { "type": "video" }, { "type": "video" }]
+    }
+  ]
+}
+{% endschema %}

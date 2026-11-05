@@ -1,0 +1,698 @@
+{% comment %}
+  Artículo del blog (receta, productor, cultura…).
+  - Cabecera: migas de pan, categoría (primera etiqueta, enlaza al blog filtrado), fecha,
+    autor y minutos de lectura, título y entradilla (extracto).
+  - Imagen destacada a todo el ancho del contenedor y contenido del artículo en una columna legible.
+  - Etiquetas y enlaces para compartir.
+  - "Shop the ingredients": productos relacionados del metacampo del artículo
+    custom.related_products (lista de productos); si no tiene, la colección del ajuste.
+    Usa la tarjeta de producto y el carrusel del tema.
+  - "More from the blog": otros artículos del mismo blog (snippet article-card).
+  - Comentarios si el blog los tiene activados.
+  - Datos estructurados: BlogPosting (Article) y BreadcrumbList en JSON-LD.
+{% endcomment %}
+
+{%- liquid
+  assign category = article.tags.first
+  assign category_url = blog.url
+  if category != blank
+    assign category_handle = category | handleize
+    assign category_url = blog.url | append: '/tagged/' | append: category_handle
+  endif
+
+  assign word_count = article.content | strip_html | split: ' ' | size
+  assign reading_minutes = word_count | divided_by: 200 | at_least: 1
+
+  assign related = article.metafields.custom.related_products.value
+  if related == blank and section.settings.products_collection != blank
+    assign related = section.settings.products_collection.products
+  endif
+
+  assign share_url = shop.url | append: article.url
+  assign share_url_encoded = share_url | url_encode
+  assign share_title_encoded = article.title | url_encode
+
+  if article.image != blank
+    assign schema_image = article.image | image_url: width: 1920 | prepend: 'https:'
+  else
+    assign schema_image = 'recipe-default-1.jpg' | asset_url | prepend: 'https:'
+  endif
+  assign schema_logo = 'logo-the-spanish-store.png' | asset_url | prepend: 'https:'
+-%}
+
+<div class="reading-progress" aria-hidden="true" data-reading-progress><span></span></div>
+<article class="main-article full-width" data-reading-article>
+  <div class="main-article__container">
+    <nav class="breadcrumb main-article__breadcrumb" aria-label="{{ 'collections.breadcrumb' | t }}">
+      <ol role="list">
+        <li><a href="{{ routes.root_url }}">{{ 'collections.home' | t }}</a></li>
+        <li><a href="{{ blog.url }}">{{ blog.title | escape }}</a></li>
+        <li><span aria-current="page">{{ article.title | escape }}</span></li>
+      </ol>
+    </nav>
+
+    <header class="main-article__header">
+      <p class="main-article__meta">
+        {%- if category != blank -%}
+          <a href="{{ category_url }}" class="main-article__category">{{ category | escape }}</a>
+        {%- endif -%}
+        <span>{{ article.published_at | time_tag: '%B %-d, %Y' }}</span>
+        {%- if section.settings.show_author and article.author != blank -%}
+          <span>{{ 'blog.by_author' | t: author: article.author }}</span>
+        {%- endif -%}
+        <span>{{ 'blog.reading_time' | t: count: reading_minutes }}</span>
+      </p>
+      <h1 class="main-article__title">{{ article.title | escape }}</h1>
+      {%- if article.excerpt != blank -%}
+        <div class="main-article__lead">{{ article.excerpt | strip_html | escape }}</div>
+      {%- endif -%}
+    </header>
+
+    {%- if article.image != blank -%}
+      <div class="main-article__media">
+        {{
+          article.image
+          | image_url: width: 2300
+          | image_tag:
+            class: 'main-article__image',
+            alt: article.image.alt,
+            loading: 'eager',
+            fetchpriority: 'high',
+            widths: '600, 900, 1200, 1600, 2300',
+            sizes: '(min-width: 1200px) 1152px, 100vw'
+        }}
+      </div>
+    {%- endif -%}
+
+    <div class="main-article__content rte">
+      {{ article.content }}
+    </div>
+
+    <footer class="main-article__footer">
+      {%- if article.tags.size > 0 -%}
+        <ul class="main-article__tags" role="list" aria-label="{{ 'blog.tags' | t }}">
+          {%- for tag in article.tags -%}
+            <li>
+              <a href="{{ blog.url }}/tagged/{{ tag | handleize }}">{{ tag | escape }}</a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- if section.settings.show_share -%}
+        <div class="main-article__share">
+          <span>{{ 'blog.share' | t }}</span>
+          <a
+            href="https://www.facebook.com/sharer/sharer.php?u={{ share_url_encoded }}"
+            target="_blank"
+            rel="noopener"
+          >
+            Facebook
+          </a>
+          <a
+            href="https://twitter.com/intent/tweet?text={{ share_title_encoded }}&url={{ share_url_encoded }}"
+            target="_blank"
+            rel="noopener"
+          >
+            X
+          </a>
+          <a
+            href="https://pinterest.com/pin/create/button/?url={{ share_url_encoded }}&media={{ schema_image | url_encode }}&description={{ share_title_encoded }}"
+            target="_blank"
+            rel="noopener"
+          >
+            Pinterest
+          </a>
+          <a
+            href="https://wa.me/?text={{ share_title_encoded }}%20{{ share_url_encoded }}"
+            target="_blank"
+            rel="noopener"
+          >
+            WhatsApp
+          </a>
+        </div>
+      {%- endif -%}
+    </footer>
+  </div>
+
+  {%- if related != blank and related.size > 0 -%}
+    <section class="main-article__products" aria-labelledby="ArticleProducts-{{ section.id }}">
+      <div class="section-header">
+        <h2 class="section-header__heading" id="ArticleProducts-{{ section.id }}">
+          {{- section.settings.products_heading | escape -}}
+        </h2>
+      </div>
+      <carousel-slider class="carousel" style="--carousel-columns: 4;">
+        <ul class="carousel__track" role="list" data-carousel-track>
+          {%- for item in related limit: 12 -%}
+            <li class="carousel__slide">
+              {%- render 'product-card',
+                product: item,
+                badge_source: 'type',
+                tax_note: section.settings.tax_note,
+                show_rating: true
+              -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+        {%- render 'carousel-arrows' -%}
+      </carousel-slider>
+    </section>
+  {%- endif -%}
+
+  {%- if section.settings.show_more_articles and blog.articles_count > 1 -%}
+    <section class="main-article__more" aria-labelledby="ArticleMore-{{ section.id }}">
+      <div class="section-header">
+        <h2 class="section-header__heading" id="ArticleMore-{{ section.id }}">
+          {{- section.settings.more_heading | escape -}}
+        </h2>
+        <a href="{{ blog.url }}" class="section-header__link">{{ 'blog.view_all' | t }}</a>
+      </div>
+      <ul class="main-article__more-grid" role="list">
+        {%- assign shown = 0 -%}
+        {%- for other in blog.articles limit: 5 -%}
+          {%- if other.id == article.id -%}{%- continue -%}{%- endif -%}
+          <li>
+            {%- render 'article-card',
+              article: other,
+              index: forloop.index0,
+              read_more_label: section.settings.read_more_label
+            -%}
+          </li>
+          {%- assign shown = shown | plus: 1 -%}
+          {%- if shown >= 4 -%}{%- break -%}{%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </section>
+  {%- endif -%}
+
+  {%- if blog.comments_enabled? -%}
+    <section class="main-article__comments" id="comments" aria-labelledby="ArticleComments-{{ section.id }}">
+      <h2 class="main-article__comments-title" id="ArticleComments-{{ section.id }}">
+        {{- 'blog.article_comments' | t }} ({{ article.comments_count }})
+      </h2>
+
+      {%- paginate article.comments by 10 -%}
+        {%- if article.comments_count > 0 -%}
+          <ul class="article-comments" role="list">
+            {%- for comment in article.comments -%}
+              <li class="article-comment">
+                <p class="article-comment__author">
+                  {{ comment.author | escape }}
+                  <span>{{ comment.created_at | time_tag: '%B %-d, %Y' }}</span>
+                </p>
+                <div class="article-comment__body">{{ comment.content }}</div>
+              </li>
+            {%- endfor -%}
+          </ul>
+          {%- if paginate.pages > 1 -%}
+            {{ paginate | default_pagination: anchor: 'comments' }}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endpaginate -%}
+
+      {%- form 'new_comment', article, class: 'article-comment-form' -%}
+        <h3 class="article-comment-form__title">{{ 'blog.comment_form_title' | t }}</h3>
+        {%- if form.posted_successfully? -%}
+          <p class="article-comment-form__success" role="status">
+            {%- if blog.moderated? -%}
+              {{- 'blog.comment_moderated' | t -}}
+            {%- else -%}
+              {{- 'blog.comment_posted' | t -}}
+            {%- endif -%}
+          </p>
+        {%- endif -%}
+        {{ form.errors | default_errors }}
+        <div class="article-comment-form__row">
+          <label>
+            <span>{{ 'blog.comment_form_name' | t }}</span>
+            <input type="text" name="comment[author]" value="{{ form.author }}" autocomplete="name" required>
+          </label>
+          <label>
+            <span>{{ 'blog.comment_form_email' | t }}</span>
+            <input type="email" name="comment[email]" value="{{ form.email }}" autocomplete="email" required>
+          </label>
+        </div>
+        <label>
+          <span>{{ 'blog.comment_form_body' | t }}</span>
+          <textarea name="comment[body]" rows="5" required>{{ form.body }}</textarea>
+        </label>
+        <button type="submit" class="button button--primary">{{ 'blog.comment_form_submit' | t }}</button>
+      {%- endform -%}
+    </section>
+  {%- endif -%}
+</article>
+
+{%- comment -%} Datos estructurados (schema.org): Article (BlogPosting) y migas de pan {%- endcomment -%}
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "mainEntityOfPage": { "@type": "WebPage", "@id": {{ canonical_url | json }} },
+    "headline": {{ article.title | truncate: 110 | json }},
+    "description": {{ article.excerpt_or_content | strip_html | strip_newlines | truncatewords: 40 | json }},
+    "image": [{{ schema_image | json }}],
+    "datePublished": {{ article.published_at | date: '%Y-%m-%dT%H:%M:%S%:z' | json }},
+    "dateModified": {{ article.updated_at | default: article.published_at | date: '%Y-%m-%dT%H:%M:%S%:z' | json }},
+    "author": { "@type": "Person", "name": {{ article.author | default: shop.name | json }} },
+    "publisher": {
+      "@type": "Organization",
+      "name": {{ shop.name | json }},
+      "logo": { "@type": "ImageObject", "url": {{ schema_logo | json }} }
+    },
+    {%- if category != blank %}
+      "articleSection": {{ category | json }},
+    {%- endif %}
+    {%- if article.tags.size > 0 %}
+      "keywords": {{ article.tags | join: ', ' | json }},
+    {%- endif %}
+    {%- if related != blank and related.size > 0 %}
+      "mentions": [
+        {%- for item in related limit: 12 -%}
+          { "@type": "Product", "name": {{ item.title | json }}, "url": {{ shop.url | append: item.url | json }} }{% unless forloop.last %},{% endunless %}
+        {%- endfor -%}
+      ],
+    {%- endif %}
+    "wordCount": {{ word_count }},
+    "inLanguage": {{ request.locale.iso_code | json }}
+  }
+</script>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": {{ 'collections.home' | t | json }}, "item": {{ shop.url | append: routes.root_url | json }} },
+      { "@type": "ListItem", "position": 2, "name": {{ blog.title | json }}, "item": {{ shop.url | append: blog.url | json }} },
+      { "@type": "ListItem", "position": 3, "name": {{ article.title | json }}, "item": {{ canonical_url | json }} }
+    ]
+  }
+</script>
+
+{% stylesheet %}
+  .main-article {
+    display: block;
+    padding-block: 0.875rem 3rem;
+  }
+
+  .main-article__container,
+  .main-article__products,
+  .main-article__more,
+  .main-article__comments {
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+  }
+
+  .main-article__header,
+  .main-article__content,
+  .main-article__footer {
+    max-width: 45rem;
+    margin-inline: auto;
+  }
+
+  .main-article__header {
+    margin-block: 2rem 1.75rem;
+    text-align: center;
+  }
+
+  .main-article__meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    color: #646b7c;
+    font-size: 0.9375rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .main-article__category {
+    padding: 0.3125rem 0.875rem;
+    border-radius: 2rem;
+    background-color: var(--color-accent);
+    color: #fff;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+
+  .main-article__category:hover {
+    opacity: 0.9;
+  }
+
+  .main-article__title {
+    margin: 1rem 0 0;
+    color: #000;
+    font-size: 1.625rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .main-article__lead {
+    margin-block-start: 0.875rem;
+    color: #6f6f6f;
+    font-size: 1.0625rem;
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .main-article__media {
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: #f2f2f2;
+  }
+
+  .main-article__image {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  /* Contenido del artículo */
+  .main-article__content {
+    margin-block-start: 2.25rem;
+    color: #2e2e2e;
+    font-size: 1.0625rem;
+    line-height: 1.75;
+  }
+
+  .main-article__content > :first-child {
+    margin-block-start: 0;
+  }
+
+  .main-article__content :is(h2, h3, h4) {
+    margin: 2.25rem 0 0.75rem;
+    color: #000;
+    line-height: 1.25;
+  }
+
+  .main-article__content h2 {
+    font-size: 1.375rem;
+  }
+
+  .main-article__content h3 {
+    font-size: 1.125rem;
+  }
+
+  .main-article__content :is(p, ul, ol, blockquote, table) {
+    margin: 0 0 1.25rem;
+  }
+
+  .main-article__content :is(ul, ol) {
+    padding-inline-start: 1.25rem;
+  }
+
+  .main-article__content li + li {
+    margin-block-start: 0.375rem;
+  }
+
+  .main-article__content li::marker {
+    color: var(--color-accent);
+  }
+
+  .main-article__content a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.1875rem;
+  }
+
+  .main-article__content img {
+    height: auto;
+    margin-block: 0.5rem;
+    border-radius: 6px;
+  }
+
+  .main-article__content blockquote {
+    padding: 1rem 1.25rem;
+    border-left: 3px solid var(--color-accent);
+    background-color: #faf8f1;
+    font-style: italic;
+  }
+
+  .main-article__content table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  .main-article__content :is(th, td) {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #ebe8df;
+    text-align: start;
+  }
+
+  .main-article__footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-block-start: 2rem;
+    padding-block-start: 1.5rem;
+    border-top: 1px solid #ebe8df;
+  }
+
+  .main-article__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .main-article__tags a {
+    display: inline-flex;
+    padding: 0.3125rem 0.875rem;
+    border: 1px solid #f4f0e2;
+    border-radius: 2rem;
+    color: #000;
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .main-article__tags a:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .main-article__share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    color: #646b7c;
+    font-size: 0.875rem;
+  }
+
+  .main-article__share a {
+    color: #000;
+    text-decoration: underline;
+    text-underline-offset: 0.1875rem;
+  }
+
+  .main-article__share a:hover {
+    color: var(--color-accent);
+  }
+
+  .main-article__products,
+  .main-article__more {
+    margin-block-start: 3rem;
+  }
+
+  .main-article__more-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem 0.9375rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Comentarios */
+  .main-article__comments {
+    max-width: 45rem;
+    margin-block-start: 3rem;
+  }
+
+  .main-article__comments-title {
+    margin: 0 0 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+
+  .article-comments {
+    display: grid;
+    gap: 1rem;
+    margin: 0 0 2rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .article-comment {
+    padding: 1rem 1.25rem;
+    border: 1px solid #f4f0e2;
+    border-radius: 5px;
+  }
+
+  .article-comment__author {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  .article-comment__author span {
+    color: #646b7c;
+    font-weight: 400;
+  }
+
+  .article-comment__body {
+    margin-block-start: 0.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  .article-comment-form {
+    display: grid;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: 6px;
+    background-color: #faf8f1;
+  }
+
+  .article-comment-form__title {
+    margin: 0;
+    font-size: 1.0625rem;
+  }
+
+  .article-comment-form__row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .article-comment-form label {
+    display: grid;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+  }
+
+  .article-comment-form :is(input, textarea) {
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #e3ded0;
+    border-radius: 3px;
+    background-color: #fff;
+    font-size: 0.9375rem;
+  }
+
+  .article-comment-form .button {
+    justify-self: start;
+  }
+
+  .article-comment-form__success {
+    margin: 0;
+    color: #0a7900;
+    font-size: 0.9375rem;
+  }
+
+  @media (min-width: 750px) {
+    .main-article__title {
+      font-size: 2.0625rem;
+    }
+
+    .main-article__more-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .article-comment-form__row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 990px) {
+    .main-article {
+      padding-block-start: 1.0625rem;
+    }
+
+    .main-article__media {
+      aspect-ratio: 1152 / 500;
+    }
+
+    .main-article__more-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.main_article",
+  "tag": "section",
+  "class": "main-article-section",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_author",
+      "label": "t:labels.show_author",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_share",
+      "label": "t:labels.show_share",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:general.related_products"
+    },
+    {
+      "type": "text",
+      "id": "products_heading",
+      "label": "t:labels.heading",
+      "default": "Shop the ingredients"
+    },
+    {
+      "type": "collection",
+      "id": "products_collection",
+      "label": "t:labels.collection",
+      "info": "t:info.article_products"
+    },
+    {
+      "type": "text",
+      "id": "tax_note",
+      "label": "t:labels.tax_note",
+      "default": "VAT included. Free shipping."
+    },
+    {
+      "type": "header",
+      "content": "t:general.more_articles"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_more_articles",
+      "label": "t:labels.show_more_articles",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "more_heading",
+      "label": "t:labels.heading",
+      "default": "More from the blog"
+    },
+    {
+      "type": "text",
+      "id": "read_more_label",
+      "label": "t:labels.read_more_label",
+      "default": "Read More"
+    }
+  ]
+}
+{% endschema %}

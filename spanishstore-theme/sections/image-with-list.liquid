@@ -1,0 +1,393 @@
+{% comment %}
+  Franja con texto + lista de ventajas y una imagen con esquinas redondeadas
+  (p. ej. "A little help for your next tapas night." en la página de tienda).
+  - Titular en dos partes: la segunda va resaltada en color (rojo por defecto).
+  - Cada punto de la lista es un bloque "item" con icono de check.
+  - Desktop: texto a un lado y la imagen al otro (posición configurable), centrados en vertical.
+  - Móvil: imagen arriba y texto debajo.
+  - Layout "split": a todo el ancho, mitad imagen (sin bordes) y mitad panel con el texto
+    centrado y patrón opcional (p. ej. en la ficha de producto).
+  Sin imagen se usa assets/tapas-default.jpg.
+{% endcomment %}
+
+{%- liquid
+  assign image = section.settings.image
+  if section.settings.show_pattern
+    assign pattern_url = 'pattern-tile.svg' | asset_url
+  endif
+-%}
+
+<div
+  class="image-with-list full-width image-with-list--{{ section.settings.layout }}{% if section.settings.image_position == 'left' %} image-with-list--reverse{% endif %}"
+  style="--iwl-bg: {{ section.settings.background }}; --iwl-highlight: {{ section.settings.highlight_color }};{% if pattern_url %} --iwl-pattern: url('{{ pattern_url }}');{% endif %}"
+>
+  <div class="image-with-list__inner">
+    <div class="image-with-list__content">
+      {%- if section.settings.heading != blank or section.settings.heading_highlight != blank -%}
+        <h2 class="image-with-list__heading">
+          {{- section.settings.heading | escape -}}
+          {%- if section.settings.heading_highlight != blank -%}
+            <span class="image-with-list__highlight">{{ section.settings.heading_highlight | escape }}</span>
+          {%- endif -%}
+        </h2>
+      {%- endif -%}
+
+      {%- if section.blocks.size > 0 -%}
+        <ul class="image-with-list__list" role="list">
+          {%- for block in section.blocks -%}
+            <li class="image-with-list__item" {{ block.shopify_attributes }}>
+              {{- 'icon-check-circle.svg' | inline_asset_content -}}
+              <span>{{ block.settings.text | escape }}</span>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- if section.settings.button_label != blank -%}
+        <a
+          {% if section.settings.button_link != blank %}
+            href="{{ section.settings.button_link }}"
+          {% else %}
+            href="{{ routes.all_products_collection_url }}"
+          {% endif %}
+          class="button button--primary image-with-list__button"
+        >
+          {{- section.settings.button_label | escape -}}
+        </a>
+      {%- endif -%}
+    </div>
+
+    <div class="image-with-list__media">
+      {%- liquid
+        assign sizes = '(min-width: 990px) 540px, 100vw'
+        if section.settings.layout == 'split'
+          assign sizes = '(min-width: 750px) 50vw, 100vw'
+        endif
+      -%}
+      {%- if image != blank -%}
+        {%- assign image_style = image.presentation.focal_point | default: '50% 50%' | prepend: 'object-position: ' -%}
+        {{
+          image
+          | image_url: width: 1400
+          | image_tag:
+            class: 'image-with-list__image',
+            alt: image.alt,
+            loading: 'lazy',
+            widths: '375, 550, 750, 1100, 1400',
+            sizes: sizes,
+            style: image_style
+        }}
+      {%- else -%}
+        {%- assign default_image_url = 'tapas-default.jpg' | asset_url -%}
+        <img
+          class="image-with-list__image"
+          src="{{ default_image_url }}"
+          srcset="{%- render 'asset-srcset', url: default_image_url, max: 961 -%}"
+          sizes="(min-width: 750px) 50vw, 100vw"
+          alt=""
+          width="961"
+          height="600"
+          loading="lazy"
+        >
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .image-with-list {
+    margin-block: 2.5rem;
+    background-color: var(--iwl-bg);
+  }
+
+  .image-with-list__inner {
+    display: grid;
+    gap: 2rem;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+    padding-block: 1.75rem 2.5rem;
+  }
+
+  .image-with-list__media {
+    order: -1;
+    aspect-ratio: 537 / 500;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: #e6e6e6;
+  }
+
+  .image-with-list__image {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .image-with-list__heading {
+    margin: 0;
+    color: #000;
+    font-size: 1.375rem;
+    font-weight: 400;
+    line-height: 1.23;
+    text-transform: uppercase;
+  }
+
+  .image-with-list__highlight {
+    display: block;
+    color: var(--iwl-highlight);
+  }
+
+  .image-with-list__list {
+    display: grid;
+    gap: 1.625rem;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .image-with-list__item {
+    display: flex;
+    align-items: center;
+    gap: 0.6875rem;
+    font-size: 0.875rem;
+    line-height: 1.3;
+  }
+
+  .image-with-list__item svg {
+    flex-shrink: 0;
+    width: 0.75rem;
+    height: 0.75rem;
+    color: var(--iwl-highlight);
+  }
+
+  .image-with-list__button {
+    margin-block-start: 2.125rem;
+    border-radius: 3px;
+  }
+
+  /* Split: imagen a sangre en una mitad y panel con patrón en la otra */
+  .image-with-list--split {
+    background-image: var(--iwl-pattern, none);
+    background-size: 3.875rem;
+  }
+
+  .image-with-list--split .image-with-list__inner {
+    width: 100%;
+    gap: 0;
+    padding: 0;
+  }
+
+  .image-with-list--split .image-with-list__media {
+    aspect-ratio: 4 / 3;
+    border-radius: 0;
+  }
+
+  .image-with-list--split .image-with-list__content {
+    padding: 2.5rem var(--page-margin);
+  }
+
+  /* Móvil (diseño del usuario a 375 px, "A little help for your next tapas night."): título centrado de 29 px,
+     lista de 17 px con iconos de 19 px, botón de 304×58 e imagen alta (351:438) debajo */
+  @media (max-width: 749px) {
+    .image-with-list:not(.image-with-list--split) .image-with-list__inner {
+      gap: 2.75rem;
+      padding-block: 4.75rem 2rem;
+    }
+
+    .image-with-list:not(.image-with-list--split) .image-with-list__media {
+      order: 1;
+      aspect-ratio: 351 / 438;
+      border-radius: 8px;
+    }
+
+    .image-with-list:not(.image-with-list--split) .image-with-list__heading {
+      font-size: 1.8125rem;
+      line-height: 2.21875rem;
+      text-align: center;
+    }
+
+    .image-with-list:not(.image-with-list--split) .image-with-list__list {
+      gap: 1.75rem;
+      margin-block-start: 2.25rem;
+    }
+
+    .image-with-list:not(.image-with-list--split) .image-with-list__item {
+      gap: 0.625rem;
+      font-size: 1.0625rem;
+      line-height: 1.25;
+    }
+
+    .image-with-list:not(.image-with-list--split) .image-with-list__item svg {
+      width: 1.1875rem;
+      height: 1.1875rem;
+    }
+
+    .image-with-list:not(.image-with-list--split) .image-with-list__button {
+      width: min(19rem, 100%);
+      min-height: 3.625rem;
+      margin-block-start: 2.25rem;
+      font-size: 1.0625rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .image-with-list {
+      margin-block: 3rem;
+    }
+
+    .image-with-list__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 33.5625rem);
+      align-items: center;
+      gap: 3rem;
+      padding-block: 1.75rem 1.625rem;
+    }
+
+    .image-with-list__media {
+      order: 0;
+    }
+
+    .image-with-list--reverse .image-with-list__inner {
+      grid-template-columns: minmax(0, 33.5625rem) minmax(0, 1fr);
+    }
+
+    .image-with-list--reverse .image-with-list__media {
+      order: -1;
+    }
+
+    .image-with-list__heading {
+      font-size: 1.625rem;
+    }
+
+    .image-with-list--split {
+      margin-block: 2.375rem 3rem;
+    }
+
+    .image-with-list--split .image-with-list__inner,
+    .image-with-list--split.image-with-list--reverse .image-with-list__inner {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 0;
+      min-height: 27.1875rem;
+      padding: 0;
+    }
+
+    .image-with-list--split .image-with-list__media {
+      position: relative;
+      aspect-ratio: auto;
+    }
+
+    .image-with-list--split .image-with-list__image {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* El bloque de texto se centra en el panel; el texto sigue alineado a la izquierda */
+    .image-with-list--split .image-with-list__content {
+      align-self: center;
+      justify-self: center;
+      padding: 2.5rem 2rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.image_with_list",
+  "tag": "section",
+  "class": "image-with-list-section",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:labels.image"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:labels.image_position",
+      "options": [
+        { "value": "left", "label": "t:options.alignment.left" },
+        { "value": "right", "label": "t:options.alignment.right" }
+      ],
+      "default": "right"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:general.layout",
+      "options": [
+        { "value": "contained", "label": "t:options.iwl_layout.contained" },
+        { "value": "split", "label": "t:options.iwl_layout.split" }
+      ],
+      "default": "contained"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "A little help for your next"
+    },
+    {
+      "type": "text",
+      "id": "heading_highlight",
+      "label": "t:labels.heading_highlight",
+      "info": "t:info.heading_highlight",
+      "default": "Tapas night."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:labels.button_label",
+      "default": "Discover the collection"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:labels.button_link"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#FAF8F1"
+    },
+    {
+      "type": "color",
+      "id": "highlight_color",
+      "label": "t:labels.highlight_color",
+      "default": "#BE1621"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_pattern",
+      "label": "t:labels.show_pattern",
+      "default": false
+    }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "name": "t:general.list_item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "t:labels.text",
+          "default": "Explore products by category"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.image_with_list",
+      "blocks": [
+        { "type": "item" },
+        { "type": "item", "settings": { "text": "Pair cheese, charcuterie and pantry favorites." } },
+        { "type": "item", "settings": { "text": "Build a pack that suits your table." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

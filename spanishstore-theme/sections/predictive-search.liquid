@@ -1,0 +1,425 @@
+{% comment %}
+  Resultados del buscador de la cabecera (búsqueda predictiva de Shopify).
+  No se coloca en ninguna plantilla: el buscador (<header-search> en sections/header.liquid) la pide con
+  /search/suggest?q=…&section_id=predictive-search cuando se han escrito al menos 3 letras y copia
+  el contenido de #PredictiveSearchResults en el desplegable (.header__suggestions, en la cabecera).
+  Los estilos están aquí porque el CSS de las secciones se carga en todas las páginas.
+  - Arriba: sugerencias (búsquedas y categorías) en forma de pastillas.
+  - Productos: foto, nombre y precio (con el precio anterior tachado si está rebajado).
+  - Abajo: enlace a todos los resultados (página de búsqueda con el diseño de la tienda).
+{% endcomment %}
+
+{%- liquid
+  assign currency = cart.currency.iso_code
+  assign terms = predictive_search.terms
+  assign products = predictive_search.resources.products
+  assign collections = predictive_search.resources.collections
+  assign queries = predictive_search.resources.queries
+  assign terms_param = terms | url_encode
+  assign search_url = routes.search_url | append: '?q=' | append: terms_param | append: '&type=product&options%5Bprefix%5D=last'
+-%}
+
+<div id="PredictiveSearchResults" data-count="{{ products.size }}">
+  {%- if predictive_search.performed -%}
+    {%- if queries.size > 0 or collections.size > 0 -%}
+      <div class="predictive-search__group">
+        <p class="predictive-search__heading" id="PredictiveSearchSuggestions">{{ 'search.suggestions' | t }}</p>
+        <ul class="predictive-search__pills" role="group" aria-labelledby="PredictiveSearchSuggestions">
+          {%- for query in queries -%}
+            <li role="presentation">
+              <a
+                class="predictive-search__pill"
+                id="PredictiveSearchQuery-{{ forloop.index }}"
+                href="{{ query.url }}"
+                role="option"
+                aria-selected="false"
+              >
+                {{- query.styled_text -}}
+              </a>
+            </li>
+          {%- endfor -%}
+          {%- for collection in collections -%}
+            <li role="presentation">
+              <a
+                class="predictive-search__pill predictive-search__pill--collection"
+                id="PredictiveSearchCollection-{{ forloop.index }}"
+                href="{{ collection.url }}"
+                role="option"
+                aria-selected="false"
+              >
+                {{- collection.title | escape -}}
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </div>
+    {%- endif -%}
+
+    {%- if products.size > 0 -%}
+      <div class="predictive-search__group">
+        <p class="predictive-search__heading" id="PredictiveSearchProducts">{{ 'search.products' | t }}</p>
+        <ul class="predictive-search__products" role="group" aria-labelledby="PredictiveSearchProducts">
+          {%- for product in products -%}
+            <li role="presentation">
+              <a
+                class="predictive-search__product"
+                id="PredictiveSearchProduct-{{ forloop.index }}"
+                href="{{ product.url }}"
+                role="option"
+                aria-selected="false"
+              >
+                <span class="predictive-search__media">
+                  {%- if product.featured_image -%}
+                    {{
+                      product.featured_image
+                      | image_url: width: 128
+                      | image_tag: widths: '64, 128', sizes: '64px', alt: '', loading: 'eager'
+                    }}
+                  {%- endif -%}
+                </span>
+                <span class="predictive-search__info">
+                  <span class="predictive-search__title">{{ product.title | escape }}</span>
+                  <span class="predictive-search__price">
+                    <span class="predictive-search__price-current">
+                      {{- product.price | money_without_currency }} {{ currency -}}
+                    </span>
+                    {%- if product.compare_at_price > product.price -%}
+                      <s class="predictive-search__price-compare">
+                        <span class="visually-hidden">{{ 'products.regular_price' | t }}</span>
+                        {{- product.compare_at_price | money_without_currency }} {{ currency -}}
+                      </s>
+                    {%- endif -%}
+                  </span>
+                </span>
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </div>
+    {%- else -%}
+      <p class="predictive-search__empty">{{ 'search.no_suggestions' | t: terms: terms }}</p>
+    {%- endif -%}
+
+    <a
+      class="predictive-search__all"
+      id="PredictiveSearchAll"
+      href="{{ search_url }}"
+      role="option"
+      aria-selected="false"
+    >
+      {{- 'search.view_all' | t: terms: terms -}}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    <p class="visually-hidden" data-predictive-status>
+      {{- 'search.results_count' | t: count: products.size -}}
+    </p>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  /* Contenido del desplegable (el contenedor, .header__suggestions, está en sections/header.liquid) */
+  .predictive-search__group + .predictive-search__group {
+    margin-block-start: 0.75rem;
+  }
+
+  .predictive-search__heading {
+    margin: 0 0 0.375rem;
+    padding-inline: 1rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b6b6b;
+  }
+
+  .predictive-search__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin: 0;
+    padding: 0 1rem;
+    list-style: none;
+  }
+
+  .predictive-search__pill {
+    display: inline-block;
+    padding: 0.3125rem 0.75rem;
+    border: 1px solid #e3e3e3;
+    border-radius: 2rem;
+    font-size: 0.9375rem;
+    color: var(--color-foreground);
+    text-decoration: none;
+  }
+
+  .predictive-search__pill mark {
+    background: none;
+    font-weight: 700;
+    color: inherit;
+  }
+
+  .predictive-search__pill--collection {
+    border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+    color: var(--color-accent);
+  }
+
+  .predictive-search__products {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .predictive-search__product {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.5rem 1rem;
+    color: var(--color-foreground);
+    text-decoration: none;
+  }
+
+  .predictive-search__media {
+    flex: 0 0 auto;
+    width: 3.5rem;
+    height: 3.5rem;
+    overflow: hidden;
+    border-radius: 4px;
+    background-color: #f6f4ee;
+  }
+
+  .predictive-search__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .predictive-search__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1875rem;
+    min-width: 0;
+  }
+
+  /* Nombres largos: hasta 2 líneas */
+  .predictive-search__title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 0.9375rem;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .predictive-search__price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+  }
+
+  .predictive-search__price-current {
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
+  .predictive-search__price-compare {
+    font-size: 0.875rem;
+    color: #6b6b6b;
+  }
+
+  .predictive-search__empty {
+    margin: 0;
+    padding: 0.25rem 1rem 0.5rem;
+    font-size: 0.9375rem;
+    color: #5f5c55;
+  }
+
+  .predictive-search__all {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-block-start: 0.5rem;
+    padding: 0.8125rem 1rem;
+    border-top: 1px solid #ececec;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .predictive-search__all svg {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .predictive-search__product:hover,
+  .predictive-search__all:hover,
+  .predictive-search__product[aria-selected='true'],
+  .predictive-search__all[aria-selected='true'] {
+    background-color: #f8f6f0;
+  }
+
+  .predictive-search__pill:hover,
+  .predictive-search__pill[aria-selected='true'] {
+    border-color: var(--color-foreground);
+    background-color: #f8f6f0;
+  }
+
+  /* Texto buscado dentro del nombre del producto: en negrita y con un subrayado tipo rotulador */
+  .predictive-search__match {
+    background: linear-gradient(color-mix(in srgb, var(--color-accent) 22%, transparent), color-mix(in srgb, var(--color-accent) 22%, transparent))
+      0 88% / 100% 0.4em no-repeat;
+    font-weight: 700;
+    color: inherit;
+  }
+
+  /* Hover / selección con teclado: la fila se desplaza un poco, la foto se acerca y el nombre se pone rojo */
+  .predictive-search__product {
+    position: relative;
+    transition: background-color 0.2s ease;
+  }
+
+  .predictive-search__product::before {
+    position: absolute;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    left: 0;
+    width: 3px;
+    content: '';
+    background-color: var(--color-accent);
+    border-radius: 0 3px 3px 0;
+    transform: scaleY(0);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .predictive-search__info,
+  .predictive-search__media img {
+    transition: translate 0.35s cubic-bezier(0.16, 1, 0.3, 1), scale 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .predictive-search__title {
+    transition: color 0.2s ease;
+  }
+
+  .predictive-search__product:hover::before,
+  .predictive-search__product[aria-selected='true']::before {
+    transform: none;
+  }
+
+  .predictive-search__product:hover .predictive-search__info,
+  .predictive-search__product[aria-selected='true'] .predictive-search__info {
+    translate: 0.25rem 0;
+  }
+
+  .predictive-search__product:hover .predictive-search__media img,
+  .predictive-search__product[aria-selected='true'] .predictive-search__media img {
+    scale: 1.1;
+  }
+
+  .predictive-search__product:hover .predictive-search__title,
+  .predictive-search__product[aria-selected='true'] .predictive-search__title {
+    color: var(--color-accent);
+  }
+
+  .predictive-search__all svg {
+    transition: translate 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .predictive-search__all:hover svg,
+  .predictive-search__all[aria-selected='true'] svg {
+    translate: 0.25rem 0;
+  }
+
+  /* Entrada escalonada al abrir el desplegable (.is-entering): cada elemento espera var(--i), que pone
+     header-search al pintar los resultados. Si ya estaba abierto y se sigue escribiendo (.is-updating),
+     el contenido nuevo solo hace un fundido corto, sin cascada. */
+  @media (prefers-reduced-motion: no-preference) {
+    .header__suggestions.is-entering :is(
+        .predictive-search__heading,
+        .predictive-search__empty,
+        .predictive-search__all,
+        .predictive-search__pill,
+        .predictive-search__product
+      ) {
+      animation: suggest-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+      animation-delay: calc(var(--i, 0) * 0.025s);
+    }
+
+    /* Productos: entran desde la izquierda y la foto se asienta con un zoom */
+    .header__suggestions.is-entering .predictive-search__product {
+      animation-name: suggest-slide;
+    }
+
+    .header__suggestions.is-entering .predictive-search__media img {
+      animation: suggest-zoom 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+      animation-delay: calc(var(--i, 0) * 0.025s);
+    }
+
+    /* Sugerencias: aparecen con un pequeño rebote */
+    .header__suggestions.is-entering .predictive-search__pill {
+      animation-name: suggest-pop;
+      animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .header__suggestions.is-updating > * {
+      animation: suggest-fade 0.18s ease;
+    }
+
+    /* El subrayado del texto buscado se dibuja enseguida */
+    .header__suggestions .predictive-search__match {
+      animation: suggest-mark 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
+    }
+
+    @keyframes suggest-up {
+      from {
+        opacity: 0;
+        transform: translateY(0.5rem);
+      }
+    }
+
+    @keyframes suggest-slide {
+      from {
+        opacity: 0;
+        transform: translateX(-0.75rem);
+      }
+    }
+
+    @keyframes suggest-zoom {
+      from {
+        transform: scale(1.2);
+      }
+    }
+
+    @keyframes suggest-pop {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+    }
+
+    @keyframes suggest-fade {
+      from {
+        opacity: 0.4;
+      }
+    }
+
+    @keyframes suggest-mark {
+      from {
+        background-size: 0 0.4em;
+      }
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.predictive_search"
+}
+{% endschema %}

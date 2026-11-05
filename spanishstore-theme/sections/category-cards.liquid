@@ -1,0 +1,168 @@
+{% comment %}
+  Tarjetas de categorías (colecciones) con imagen de fondo, capa oscura y nombre centrado.
+  Cada tarjeta es un bloque:
+  - Colección: da el enlace y, si no se rellenan, el nombre y la imagen.
+  - Título e imagen: sobrescriben los de la colección.
+  La tarjeta es el snippet compartido snippets/category-card.liquid (también la usa la página de tienda).
+  - Desktop: una fila con tantas columnas como el ajuste "columns" (por defecto 7).
+  - Tablet/móvil: carrusel horizontal con scroll y snap.
+{% endcomment %}
+
+{%- if section.blocks.size > 0 -%}
+  <div
+    class="category-cards full-width"
+    style="--category-columns: {{ section.settings.columns }}; --category-overlay: {{ section.settings.overlay_opacity | divided_by: 100.0 }}; --category-fg: {{ section.settings.text_color }};"
+  >
+    <ul class="category-cards__list" role="list">
+      {%- for block in section.blocks -%}
+        <li class="category-cards__item" {{ block.shopify_attributes }}>
+          {%- render 'category-card',
+            collection: block.settings.collection,
+            title: block.settings.title,
+            image: block.settings.image,
+            index: forloop.index
+          -%}
+        </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .category-cards {
+    padding-block: 2.5rem;
+  }
+
+  /* Móvil/tablet: carrusel horizontal. Móvil (diseño a 347 px): tarjetas de 178×100 con 8 px entre ellas */
+  .category-cards__list {
+    --category-gap: 0.5rem;
+
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 11.125rem;
+    gap: var(--category-gap);
+    margin: 0;
+    padding: 0 var(--page-margin);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: var(--page-margin);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    list-style: none;
+  }
+
+  .category-cards__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-cards__item {
+    scroll-snap-align: start;
+  }
+
+  @media (max-width: 749px) {
+    .category-cards {
+      padding-block-start: 2.875rem;
+    }
+
+    .category-cards .category-card__title {
+      font-size: 1.0625rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .category-cards {
+      padding-block: 3rem;
+    }
+
+    .category-cards__list {
+      --category-gap: 0.9375rem;
+
+      grid-auto-columns: calc((100% - var(--category-gap) * 3) / 4.4);
+    }
+  }
+
+  /* Desktop: rejilla fija dentro del contenedor */
+  @media (min-width: 990px) {
+    .category-cards__list {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(var(--category-columns), minmax(0, 1fr));
+      width: min(var(--container-width), 100% - var(--page-margin) * 2);
+      margin-inline: auto;
+      padding: 0;
+      overflow: visible;
+    }
+  }
+
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.category_cards",
+  "tag": "section",
+  "class": "category-cards-section",
+  "max_blocks": 16,
+  "settings": [
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "t:labels.columns_desktop",
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "default": 7
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:labels.overlay_opacity",
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 40
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:labels.text_color",
+      "default": "#FFF9E4"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "t:general.category",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "t:labels.collection"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:labels.title",
+          "info": "t:info.category_title"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:labels.image",
+          "info": "t:info.category_image"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.category_cards",
+      "blocks": [
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" }
+      ]
+    }
+  ]
+}
+{% endschema %}

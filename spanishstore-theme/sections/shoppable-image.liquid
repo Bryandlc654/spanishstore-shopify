@@ -1,0 +1,758 @@
+{% comment %}
+  Imagen "comprable": una foto a todo el ancho con puntos (hotspots) sobre los productos.
+  Cada punto es un bloque con un producto y su posición (X e Y en % de la imagen).
+  Al pasar el ratón o tocar un punto aparece una tarjeta con el nombre y el precio,
+  que enlaza al producto. La imagen se muestra entera (sin recortar) para que los puntos
+  coincidan siempre con lo que señalan. Sin imagen se usa assets/shoppable-default.jpg
+  (los puntos por defecto de la plantilla de producto están colocados sobre esa foto).
+  Móvil (diseño del usuario): al tocar un punto con producto se abre una vista rápida en una hoja
+  inferior: foto, nombre, código (SKU), "In stock", precio y ahorro, cantidad, pestañas (descripción y
+  metacampos custom.features / custom.ingredients / custom.storage, solo las que tienen contenido) y
+  "Add to cart" (carrito AJAX: se cierra la hoja y se abre el carrito lateral).
+{% endcomment %}
+
+{%- assign image = section.settings.image -%}
+
+<shoppable-image class="shoppable-image full-width">
+  {%- liquid
+    assign img_ratio = 2
+    if section.settings.image != blank
+      assign img_ratio = section.settings.image.aspect_ratio
+    endif
+  -%}
+  <div class="shoppable-image__frame" style="--img-ratio: {{ img_ratio }};">
+    {%- if image != blank -%}
+      {{
+        image
+        | image_url: width: 2800
+        | image_tag: class: 'shoppable-image__image', alt: image.alt, loading: 'lazy', widths: '750, 1100, 1500, 2000, 2800', sizes: '100vw'
+      }}
+    {%- else -%}
+      {%- assign default_image_url = 'shoppable-default.jpg' | asset_url -%}
+      <img
+        class="shoppable-image__image"
+        src="{{ default_image_url }}"
+        srcset="{%- render 'asset-srcset', url: default_image_url, max: 1774 -%}"
+        sizes="(max-width: 749px) 160vw, 100vw"
+        alt=""
+        width="1774"
+        height="887"
+        loading="lazy"
+      >
+    {%- endif -%}
+
+    {%- for block in section.blocks -%}
+      {%- assign item = block.settings.product -%}
+      <div
+        class="hotspot{% if block.settings.x > 60 %} hotspot--left{% endif %}"
+        style="--x: {{ block.settings.x }}%; --y: {{ block.settings.y }}%;"
+        {{ block.shopify_attributes }}
+      >
+        <button
+          type="button"
+          class="hotspot__dot"
+          aria-expanded="false"
+          aria-label="{% if item != blank %}{{ item.title | escape }}{% else %}{{ 'sections.hotspot.label' | t }}{% endif %}"
+          data-hotspot
+          data-block-id="{{ block.id }}"
+        ></button>
+        <div class="hotspot__card">
+          {%- if item != blank -%}
+            <a href="{{ item.url }}" class="hotspot__title">{{ item.title | escape }}</a>
+            <span class="hotspot__price">
+              {{- item.selected_or_first_available_variant.price | money_without_currency }} {{ cart.currency.iso_code -}}
+            </span>
+          {%- else -%}
+            <span class="hotspot__title">{{ 'sections.hotspot.empty' | t }}</span>
+          {%- endif -%}
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+
+  {%- for block in section.blocks -%}
+    {%- assign item = block.settings.product -%}
+    {%- if item != blank -%}
+      {%- liquid
+        assign qv_variant = item.selected_or_first_available_variant
+        assign qv_currency = cart.currency.iso_code
+        assign qv_saving = 0
+        if qv_variant.compare_at_price > qv_variant.price
+          assign qv_saving = qv_variant.compare_at_price | minus: qv_variant.price
+        endif
+        assign qv_saving_text = qv_saving | money_without_currency | append: ' ' | append: qv_currency
+      -%}
+      <template id="QuickView-{{ block.id }}">
+        <div class="quick-view__product">
+          <a href="{{ item.url }}" class="quick-view__media">
+            {%- if item.featured_media != blank -%}
+              {{ item.featured_media | image_url: width: 300 | image_tag: alt: item.title, loading: 'lazy' }}
+            {%- endif -%}
+          </a>
+          <div class="quick-view__info">
+            <a href="{{ item.url }}" class="quick-view__title" id="QuickViewTitle-{{ block.id }}">{{ item.title | escape }}</a>
+            {%- if qv_variant.sku != blank -%}
+              <p class="quick-view__sku">{{ 'products.code' | t }}: {{ qv_variant.sku | escape }}</p>
+            {%- endif -%}
+            {%- if qv_variant.available -%}
+              <span class="quick-view__stock">{{ 'products.in_stock' | t }}</span>
+            {%- else -%}
+              <span class="quick-view__stock quick-view__stock--out">{{ 'products.sold_out' | t }}</span>
+            {%- endif -%}
+            {%- if qv_variant.available -%}
+              <div class="quick-view__quantity">
+                <button type="button" aria-label="{{ 'products.decrease_quantity' | t }}" data-qv-step="-1">−</button>
+                <input type="number" value="1" min="1" inputmode="numeric" aria-label="{{ 'products.quantity' | t }}" data-qv-quantity>
+                <button type="button" aria-label="{{ 'products.increase_quantity' | t }}" data-qv-step="1">+</button>
+              </div>
+            {%- endif -%}
+          </div>
+          <div class="quick-view__price">
+            <span class="quick-view__price-current">{{ qv_variant.price | money_without_currency }} {{ qv_currency }}</span>
+            {%- if qv_saving > 0 -%}
+              <span class="quick-view__saving">{{ 'products.you_save' | t: amount: qv_saving_text }}</span>
+            {%- endif -%}
+          </div>
+        </div>
+
+        {%- liquid
+          assign qv_features = item.metafields.custom.features
+          assign qv_ingredients = item.metafields.custom.ingredients
+          assign qv_storage = item.metafields.custom.storage
+        -%}
+        <div class="quick-view__tabs">
+          {%- if item.description != blank -%}
+            <details class="quick-view__tab" open>
+              <summary>{{ 'products.description_tab' | t }}<span class="quick-view__tab-icon" aria-hidden="true"></span></summary>
+              <div class="quick-view__tab-body rte">{{ item.description }}</div>
+            </details>
+          {%- endif -%}
+          {%- if qv_features != blank -%}
+            <details class="quick-view__tab">
+              <summary>{{ 'products.features' | t }}<span class="quick-view__tab-icon" aria-hidden="true"></span></summary>
+              <div class="quick-view__tab-body rte">{{ qv_features | metafield_tag }}</div>
+            </details>
+          {%- endif -%}
+          {%- if qv_ingredients != blank -%}
+            <details class="quick-view__tab">
+              <summary>{{ 'products.ingredients' | t }}<span class="quick-view__tab-icon" aria-hidden="true"></span></summary>
+              <div class="quick-view__tab-body rte">{{ qv_ingredients | metafield_tag }}</div>
+            </details>
+          {%- endif -%}
+          {%- if qv_storage != blank -%}
+            <details class="quick-view__tab">
+              <summary>{{ 'products.storage' | t }}<span class="quick-view__tab-icon" aria-hidden="true"></span></summary>
+              <div class="quick-view__tab-body rte">{{ qv_storage | metafield_tag }}</div>
+            </details>
+          {%- endif -%}
+        </div>
+
+        {%- if qv_variant.available -%}
+          <button type="button" class="quick-view__add" data-qv-add data-variant-id="{{ qv_variant.id }}">
+            {{- 'products.add_to_cart' | t -}}
+          </button>
+          <p class="quick-view__error" role="alert" data-qv-error hidden></p>
+        {%- else -%}
+          <a href="{{ item.url }}" class="quick-view__add">{{ 'products.view_product' | t }}</a>
+        {%- endif -%}
+      </template>
+    {%- endif -%}
+  {%- endfor -%}
+
+  <dialog class="quick-view" data-quick-view data-error-message="{{ 'products.add_error' | t }}">
+    <div class="quick-view__header">
+      <button type="button" class="quick-view__close" aria-label="{{ 'collections.close' | t }}" data-qv-close>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1 1l10 10M11 1 1 11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="quick-view__body" data-qv-body></div>
+  </dialog>
+</shoppable-image>
+
+{% stylesheet %}
+  .shoppable-image {
+    display: block;
+  }
+
+  .shoppable-image__frame {
+    position: relative;
+    line-height: 0;
+  }
+
+  .shoppable-image__image {
+    width: 100%;
+    height: auto;
+  }
+
+  .hotspot {
+    position: absolute;
+    top: var(--y);
+    left: var(--x);
+    z-index: 1;
+    translate: -50% -50%;
+    line-height: 1.3;
+  }
+
+  .hotspot:hover,
+  .hotspot:focus-within,
+  .hotspot.is-open {
+    z-index: 3;
+  }
+
+  /* Punto: anillo blanco translúcido con centro blanco y pulso suave */
+  .hotspot__dot {
+    position: relative;
+    display: block;
+    width: 1.625rem;
+    height: 1.625rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background-color: rgb(255 255 255 / 0.55);
+    cursor: pointer;
+  }
+
+  .hotspot__dot::after {
+    position: absolute;
+    inset: 0.4375rem;
+    content: '';
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+  }
+
+  .hotspot__dot::before {
+    position: absolute;
+    inset: 0;
+    content: '';
+    border-radius: 50%;
+    background-color: rgb(255 255 255 / 0.5);
+    animation: hotspot-pulse 2s ease-out infinite;
+  }
+
+  @keyframes hotspot-pulse {
+    to {
+      opacity: 0;
+      scale: 1.8;
+    }
+  }
+
+  .hotspot__dot:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+  }
+
+  /* Tarjeta del producto */
+  .hotspot__card {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 0.625rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    width: max-content;
+    max-width: 9.0625rem;
+    padding: 0.5rem 0.625rem;
+    border-radius: 2px;
+    background-color: #fff;
+    box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.15);
+    opacity: 0;
+    visibility: hidden;
+    translate: 0 -50%;
+    transition: opacity 0.2s ease, visibility 0.2s;
+  }
+
+  .hotspot--left .hotspot__card {
+    right: calc(100% + 0.625rem);
+    left: auto;
+  }
+
+  .hotspot:hover .hotspot__card,
+  .hotspot:focus-within .hotspot__card,
+  .hotspot.is-open .hotspot__card {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .hotspot__title {
+    color: #000;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  a.hotspot__title:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .hotspot__price {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--color-accent);
+    font-size: 0.9375rem;
+  }
+
+  .hotspot__price::before {
+    width: 0.3125rem;
+    height: 0.3125rem;
+    content: '';
+    border-radius: 50%;
+    background-color: currentcolor;
+  }
+
+  @media (max-width: 749px) {
+    /* Diseño del usuario: la foto se ve más alta (375:296) y recortada a los lados; los puntos se
+       recolocan con el mismo zoom (los que quedan fuera se ocultan con el recorte) */
+    .shoppable-image__frame {
+      --zoom: max(1, calc(var(--img-ratio) / 1.2669));
+
+      aspect-ratio: 375 / 296;
+      overflow: hidden;
+    }
+
+    .shoppable-image__image {
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hotspot {
+      left: calc(50% + (var(--x) - 50%) * var(--zoom));
+    }
+
+    .hotspot__dot {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .hotspot__dot::after {
+      inset: 0.3125rem;
+    }
+
+    .hotspot__card {
+      max-width: 9rem;
+    }
+  }
+
+  /* Vista rápida (móvil, diseño del usuario a 375 px): hoja inferior con esquinas de 20 px */
+  .quick-view {
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 3rem);
+    margin: 0;
+    padding: 0 1.3125rem 1.5rem;
+    overflow-y: auto;
+    border: 0;
+    border-radius: 1.25rem 1.25rem 0 0;
+    background-color: #fff;
+    color: #000;
+    line-height: 1.3;
+  }
+
+  .quick-view[open] {
+    animation: quick-view-in 0.25s ease-out;
+  }
+
+  .quick-view::backdrop {
+    background-color: rgb(0 0 0 / 0.55);
+  }
+
+  @keyframes quick-view-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  .quick-view__header {
+    display: flex;
+    justify-content: flex-end;
+    padding-block: 0.875rem 0.375rem;
+  }
+
+  .quick-view__close {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-inline-end: -0.875rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #000;
+    cursor: pointer;
+  }
+
+  .quick-view__close svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+
+  .quick-view__product {
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr) auto;
+    gap: 0.875rem;
+    align-items: start;
+  }
+
+  .quick-view__media {
+    display: block;
+    aspect-ratio: 96 / 93;
+    overflow: hidden;
+    border-radius: 4px;
+    background-color: #f2f2f2;
+  }
+
+  .quick-view__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .quick-view__info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .quick-view__title {
+    color: #000;
+    font-size: 0.9375rem;
+    text-decoration: none;
+  }
+
+  .quick-view__sku {
+    margin: 0;
+    color: #646b7c;
+    font-size: 0.875rem;
+  }
+
+  .quick-view__stock {
+    margin-block-start: 0.125rem;
+    padding: 0.1875rem 0.375rem;
+    border-radius: 2px;
+    background-color: #0a7900;
+    color: #fff;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+  }
+
+  .quick-view__stock--out {
+    background-color: #6b6b6b;
+  }
+
+  .quick-view__quantity {
+    display: flex;
+    align-items: center;
+    width: 7.75rem;
+    height: 2.25rem;
+    margin-block-start: 0.875rem;
+    border: 1px solid #ececec;
+    border-radius: 3px;
+  }
+
+  .quick-view__quantity button {
+    flex: 1;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #000;
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .quick-view__quantity input {
+    width: 2.25rem;
+    border: 0;
+    text-align: center;
+    font: inherit;
+    font-size: 0.9375rem;
+    appearance: textfield;
+  }
+
+  .quick-view__quantity input::-webkit-inner-spin-button,
+  .quick-view__quantity input::-webkit-outer-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+
+  .quick-view__price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    padding-block-start: 1.125rem;
+    text-align: right;
+  }
+
+  .quick-view__price-current {
+    font-size: 1rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .quick-view__saving {
+    color: #0a7900;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+
+  .quick-view__tabs {
+    margin-block-start: 1.25rem;
+    border-top: 1px solid #ececec;
+  }
+
+  .quick-view__tab {
+    border-bottom: 1px solid #ececec;
+  }
+
+  .quick-view__tab summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: 1.125rem;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .quick-view__tab summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .quick-view__tab[open] summary {
+    padding-block-end: 0.75rem;
+    color: var(--color-accent);
+  }
+
+  /* + que pasa a − al abrir */
+  .quick-view__tab-icon {
+    position: relative;
+    flex-shrink: 0;
+    width: 0.75rem;
+    height: 0.75rem;
+    color: var(--color-accent);
+  }
+
+  .quick-view__tab-icon::before,
+  .quick-view__tab-icon::after {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    content: '';
+    background-color: currentcolor;
+    translate: 0 -50%;
+  }
+
+  .quick-view__tab-icon::after {
+    rotate: 90deg;
+  }
+
+  .quick-view__tab[open] .quick-view__tab-icon::after {
+    opacity: 0;
+  }
+
+  .quick-view__tab-body {
+    padding-block-end: 1.125rem;
+    color: #6b6b6b;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+
+  .quick-view__tab-body p {
+    margin: 0;
+  }
+
+  .quick-view__add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 2.9375rem;
+    margin-block-start: 1.75rem;
+    border: 0;
+    border-radius: 3px;
+    background-color: var(--color-accent);
+    color: #fff;
+    font: inherit;
+    font-size: 1.0625rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .quick-view__add[aria-busy='true'] {
+    opacity: 0.6;
+  }
+
+  .quick-view__error {
+    margin: 0.75rem 0 0;
+    color: var(--color-accent);
+    font-size: 0.9375rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hotspot__dot::before {
+      animation: none;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class ShoppableImage extends HTMLElement {
+    connectedCallback() {
+      // En pantallas táctiles el punto abre/cierra la tarjeta; tocar fuera la cierra
+      this.dialog = this.querySelector('[data-quick-view]');
+      this.mobile = window.matchMedia('(max-width: 749px)');
+      this.bindQuickView();
+
+      this.addEventListener('click', (event) => {
+        const dot = event.target.closest('[data-hotspot]');
+        if (!dot) return;
+        // Móvil: si el punto tiene producto, vista rápida en una hoja inferior
+        const template = this.querySelector(`#QuickView-${dot.dataset.blockId}`);
+        if (this.mobile.matches && template && this.dialog) {
+          this.openQuickView(template, dot);
+          return;
+        }
+        const spot = dot.parentElement;
+        const open = !spot.classList.contains('is-open');
+        this.closeAll();
+        spot.classList.toggle('is-open', open);
+        dot.setAttribute('aria-expanded', String(open));
+      });
+      document.addEventListener('click', (event) => {
+        if (!this.contains(event.target)) this.closeAll();
+      });
+      this.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') this.closeAll();
+      });
+    }
+
+    bindQuickView() {
+      if (!this.dialog) return;
+      this.dialog.addEventListener('click', (event) => {
+        if (event.target === this.dialog || event.target.closest('[data-qv-close]')) {
+          this.dialog.close();
+          return;
+        }
+        const step = event.target.closest('[data-qv-step]');
+        if (step) {
+          const input = this.dialog.querySelector('[data-qv-quantity]');
+          input.value = Math.max(1, (Number(input.value) || 1) + Number(step.dataset.qvStep));
+          return;
+        }
+        const add = event.target.closest('[data-qv-add]');
+        if (add) this.addToCart(add);
+      });
+      this.dialog.addEventListener('close', () => this.lastDot?.focus());
+    }
+
+    openQuickView(template, dot) {
+      this.closeAll();
+      this.lastDot = dot;
+      const body = this.dialog.querySelector('[data-qv-body]');
+      body.replaceChildren(template.content.cloneNode(true));
+      const title = body.querySelector('.quick-view__title');
+      if (title) this.dialog.setAttribute('aria-labelledby', title.id);
+      this.dialog.showModal();
+    }
+
+    async addToCart(button) {
+      const quantity = Math.max(1, Number(this.dialog.querySelector('[data-qv-quantity]')?.value) || 1);
+      const error = this.dialog.querySelector('[data-qv-error]');
+      button.setAttribute('aria-busy', 'true');
+      if (error) error.hidden = true;
+      try {
+        if (!window.themeCart) throw new Error('cart');
+        await window.themeCart.add([{ id: Number(button.dataset.variantId), quantity }]);
+        this.dialog.close();
+      } catch (problem) {
+        if (error) {
+          error.textContent = problem?.message && problem.message !== 'cart' ? problem.message : this.dialog.dataset.errorMessage;
+          error.hidden = false;
+        }
+      } finally {
+        button.removeAttribute('aria-busy');
+      }
+    }
+
+    closeAll() {
+      this.querySelectorAll('.hotspot.is-open').forEach((spot) => {
+        spot.classList.remove('is-open');
+        spot.querySelector('[data-hotspot]')?.setAttribute('aria-expanded', 'false');
+      });
+    }
+  }
+
+  if (!customElements.get('shoppable-image')) {
+    customElements.define('shoppable-image', ShoppableImage);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:general.shoppable_image",
+  "tag": "section",
+  "class": "shoppable-image-section",
+  "max_blocks": 16,
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:labels.image",
+      "info": "t:info.shoppable_image"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "hotspot",
+      "name": "t:general.hotspot",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "t:labels.product"
+        },
+        {
+          "type": "range",
+          "id": "x",
+          "label": "t:labels.position_x",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "range",
+          "id": "y",
+          "label": "t:labels.position_y",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.shoppable_image",
+      "blocks": [
+        { "type": "hotspot", "settings": { "x": 30, "y": 40 } },
+        { "type": "hotspot", "settings": { "x": 60, "y": 60 } }
+      ]
+    }
+  ]
+}
+{% endschema %}

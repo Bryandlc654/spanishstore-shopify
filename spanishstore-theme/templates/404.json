@@ -1,0 +1,101 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-404",
+      "settings": {
+        "heading": "Page not found",
+        "text": "<p>The page you're looking for doesn't exist or has moved. Try searching for a product or explore our categories.</p>",
+        "search_placeholder": "Search products, brands and flavors..."
+      }
+    },
+    "categories": {
+      "type": "category-cards",
+      "blocks": {
+        "category_1": {
+          "type": "category",
+          "settings": {
+            "title": "Charcuterie"
+          }
+        },
+        "category_2": {
+          "type": "category",
+          "settings": {
+            "title": "Seafood"
+          }
+        },
+        "category_3": {
+          "type": "category",
+          "settings": {
+            "title": "Cheese"
+          }
+        },
+        "category_4": {
+          "type": "category",
+          "settings": {
+            "title": "Paella"
+          }
+        },
+        "category_5": {
+          "type": "category",
+          "settings": {
+            "title": "Snacks & Desserts"
+          }
+        },
+        "category_6": {
+          "type": "category",
+          "settings": {
+            "title": "Gift & Sets"
+          }
+        },
+        "category_7": {
+          "type": "category",
+          "settings": {
+            "title": "Beverages"
+          }
+        }
+      },
+      "block_order": [
+        "category_1",
+        "category_2",
+        "category_3",
+        "category_4",
+        "category_5",
+        "category_6",
+        "category_7"
+      ],
+      "settings": {
+        "columns": 7,
+        "overlay_opacity": 40,
+        "text_color": "#FFF9E4"
+      }
+    },
+    "featured": {
+      "type": "product-carousel",
+      "settings": {
+        "heading": "Our favourites",
+        "view_all_label": "View all",
+        "view_all_link": "",
+        "products_to_show": 8,
+        "columns": 4,
+        "show_arrows": true,
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "categories",
+    "featured"
+  ]
+}

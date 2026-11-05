@@ -1,0 +1,287 @@
+{% comment %}
+  Banner dividido a todo el ancho: imagen en una mitad y, en la otra, un panel de color
+  con patrón decorativo, titular y botón centrados (p. ej. "Discover the art of Spanish charcuterie.").
+  - Desktop: 50/50, la imagen a la izquierda o a la derecha.
+  - Móvil: imagen arriba (4:3) y panel debajo.
+  El patrón por defecto es assets/pattern-tile.svg; se puede sustituir por una imagen propia
+  o desactivar.
+  Sin imagen se usa assets/tapas-default.jpg (foto de embutidos del usuario, la misma que la
+  franja "Tapas night").
+{% endcomment %}
+
+{%- liquid
+  assign image = section.settings.image
+  assign image_style = image.presentation.focal_point | default: '50% 50%' | prepend: 'object-position: '
+
+  if section.settings.pattern_image != blank
+    assign pattern_url = section.settings.pattern_image | image_url: width: 300
+  elsif section.settings.show_pattern
+    assign pattern_url = 'pattern-tile.svg' | asset_url
+  endif
+-%}
+
+<div
+  class="image-with-text full-width{% if section.settings.image_position == 'right' %} image-with-text--reverse{% endif %}"
+  style="--iwt-height: {{ section.settings.height | divided_by: 16.0 }}rem; --iwt-bg: {{ section.settings.background }}; --iwt-fg: {{ section.settings.text_color }};{% if pattern_url %} --iwt-pattern: url('{{ pattern_url }}');{% endif %}"
+>
+  <div class="image-with-text__media">
+    {%- if image != blank -%}
+      {{
+        image
+        | image_url: width: 2000
+        | image_tag:
+          class: 'image-with-text__image',
+          alt: image.alt,
+          loading: 'lazy',
+          widths: '375, 750, 1100, 1500, 2000',
+          sizes: '(min-width: 750px) 50vw, 100vw',
+          style: image_style
+      }}
+    {%- else -%}
+      {%- assign default_image_url = 'tapas-default.jpg' | asset_url -%}
+      <img
+        class="image-with-text__image"
+        src="{{ default_image_url }}"
+        srcset="{%- render 'asset-srcset', url: default_image_url, max: 961 -%}"
+        sizes="(min-width: 750px) 50vw, 100vw"
+        alt=""
+        width="961"
+        height="600"
+        loading="lazy"
+      >
+    {%- endif -%}
+  </div>
+
+  <div class="image-with-text__panel">
+    <div class="image-with-text__content">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="image-with-text__heading">{{ section.settings.heading | escape | newline_to_br }}</h2>
+      {%- endif -%}
+      {%- if section.settings.text != blank -%}
+        <div class="image-with-text__text">{{ section.settings.text }}</div>
+      {%- endif -%}
+      {%- if section.settings.button_label != blank -%}
+        <a
+          {% if section.settings.button_link != blank %}
+            href="{{ section.settings.button_link }}"
+          {% else %}
+            role="link" aria-disabled="true"
+          {% endif %}
+          class="button button--primary"
+        >
+          {{- section.settings.button_label | escape -}}
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .image-with-text {
+    display: grid;
+    margin-block: 2.5rem;
+  }
+
+  .image-with-text__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background-color: #1a1a1a;
+  }
+
+  .image-with-text__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .image-with-text__panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem var(--page-margin);
+    background-color: var(--iwt-bg);
+    background-image: var(--iwt-pattern, none);
+    background-repeat: repeat;
+    background-size: 3.875rem;
+    color: var(--iwt-fg);
+    text-align: center;
+  }
+
+  .image-with-text__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 28rem;
+  }
+
+  .image-with-text__heading {
+    margin: 0;
+    font-size: 1.625rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .image-with-text__text {
+    margin-block-start: 0.75rem;
+    font-size: 1.0625rem;
+    line-height: 1.4;
+  }
+
+  .image-with-text__text p {
+    margin: 0;
+  }
+
+  .image-with-text .button {
+    margin-block-start: 1.25rem;
+    padding-inline: 1.5625rem;
+    border-radius: 4px;
+  }
+
+  /* Móvil (diseño del usuario, a 375 px): texto arriba (bloque de 453 px con el patrón) e imagen debajo
+     (450 px). Título de 36 px (interlineado 44) y botón de 273×55 con texto de 18 px */
+  @media (max-width: 749px) {
+    .image-with-text__panel {
+      order: -1;
+      min-height: 28.3125rem;
+      padding-block: 3rem;
+    }
+
+    .image-with-text__media {
+      aspect-ratio: auto;
+      height: 28.125rem;
+    }
+
+    .image-with-text__heading {
+      font-size: 2.25rem;
+      line-height: 2.75rem;
+    }
+
+    .image-with-text .button {
+      min-width: 17.0625rem;
+      min-height: 3.4375rem;
+      margin-block-start: 2.125rem;
+      padding-inline: 1.25rem;
+      font-size: 1.125rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .image-with-text {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      min-height: var(--iwt-height);
+      margin-block: 3rem;
+    }
+
+    .image-with-text__media {
+      aspect-ratio: auto;
+    }
+
+    .image-with-text--reverse .image-with-text__media {
+      order: 2;
+    }
+
+    .image-with-text__heading {
+      font-size: 2.0625rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.image_with_text",
+  "tag": "section",
+  "class": "image-with-text-section",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:labels.image",
+      "info": "t:info.iwt_image"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:labels.image_position",
+      "options": [
+        { "value": "left", "label": "t:options.alignment.left" },
+        { "value": "right", "label": "t:options.alignment.right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "range",
+      "id": "height",
+      "label": "t:labels.height_desktop",
+      "min": 300,
+      "max": 800,
+      "step": 10,
+      "unit": "px",
+      "default": 430
+    },
+    {
+      "type": "header",
+      "content": "t:general.content"
+    },
+    {
+      "type": "textarea",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "info": "t:info.heading_line_break",
+      "default": "Discover the art of\nSpanish charcuterie."
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:labels.text"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:labels.button_label",
+      "default": "Explore charcuterie"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:labels.button_link"
+    },
+    {
+      "type": "header",
+      "content": "t:general.colors"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#FAF8F1"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:labels.text_color",
+      "default": "#000000"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_pattern",
+      "label": "t:labels.show_pattern",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "pattern_image",
+      "label": "t:labels.pattern_image",
+      "info": "t:info.pattern_image"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.image_with_text"
+    }
+  ]
+}
+{% endschema %}

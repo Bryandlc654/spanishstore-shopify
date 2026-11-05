@@ -1,0 +1,78 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "footer",
+  "name": "t:general.footer",
+  "sections": {
+    "footer": {
+      "type": "footer",
+      "blocks": {
+        "col_collections": {
+          "type": "menu",
+          "settings": {
+            "heading": "Collections",
+            "menu": "main-menu",
+            "show_shop_all": true,
+            "shop_all_label": "Shop all"
+          }
+        },
+        "col_help": {
+          "type": "menu",
+          "settings": {
+            "heading": "Help",
+            "menu": "footer",
+            "show_contact": true,
+            "contact_label": "Contact",
+            "show_faq": true,
+            "faq_label": "FAQ",
+            "show_service_policies": true
+          }
+        },
+        "col_about": {
+          "type": "menu",
+          "settings": {
+            "heading": "About Us",
+            "menu": "",
+            "show_blog": true,
+            "blog_label": "Blog",
+            "show_about": true,
+            "about_label": "About us"
+          }
+        },
+        "col_contact": {
+          "type": "contact",
+          "settings": {
+            "heading": "Contact Us",
+            "phone": "+34 123456789",
+            "email": "support@spanishstore.com"
+          }
+        }
+      },
+      "block_order": [
+        "col_collections",
+        "col_help",
+        "col_about",
+        "col_contact"
+      ],
+      "settings": {
+        "background": "#EDE7D0",
+        "logo_width": 148,
+        "show_newsletter": true,
+        "newsletter_heading": "Get the full scoop",
+        "newsletter_text": "Lorem ipsum dolor sit amet consectetur. Semper pellentesque faucibus eleifend lorem volutpat id.",
+        "show_payment_icons": true,
+        "copyright": ""
+      }
+    }
+  },
+  "order": [
+    "footer"
+  ]
+}

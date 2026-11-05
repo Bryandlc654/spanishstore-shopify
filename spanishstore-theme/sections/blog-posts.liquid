@@ -1,0 +1,228 @@
+{% comment %}
+  Artículos de un blog de Shopify (p. ej. "Recipes") en tarjetas, con botón "View more" debajo.
+  Cada tarjeta: imagen, categoría (primera etiqueta del artículo) | fecha, título, extracto y botón.
+  - Desktop: 4 columnas (configurable). Si hay más artículos que columnas, aparecen las flechas.
+  - Móvil/tablet: carrusel táctil (carrusel compartido de snippets/carousel-arrows.liquid).
+  Sin blog o sin artículos muestra tarjetas de ejemplo.
+  La tarjeta es el snippet compartido article-card (sin imagen usa assets/recipe-default-1…4.jpg).
+{% endcomment %}
+
+{%- liquid
+  assign blog = section.settings.blog
+  assign limit = section.settings.articles_to_show
+
+  if section.settings.button_link != blank
+    assign button_url = section.settings.button_link
+  elsif blog != blank
+    assign button_url = blog.url
+  else
+    assign button_url = routes.root_url
+  endif
+
+  assign has_articles = false
+  if blog.articles_count > 0
+    assign has_articles = true
+  endif
+-%}
+
+<div class="blog-posts full-width">
+  {%- if section.settings.heading != blank -%}
+    <div class="section-header">
+      <h2 class="section-header__heading">{{ section.settings.heading | escape }}</h2>
+    </div>
+  {%- endif -%}
+
+  <carousel-slider
+    class="carousel blog-posts__carousel"
+    style="--carousel-columns: {{ section.settings.columns }}; --carousel-media-ratio: 0.65;"
+  >
+    <ul class="carousel__track" role="list" data-carousel-track>
+      {%- if has_articles -%}
+        {%- for article in blog.articles limit: limit -%}
+          <li class="carousel__slide">
+            {%- render 'article-card',
+              article: article,
+              index: forloop.index0,
+              show_category: section.settings.show_category,
+              show_date: section.settings.show_date,
+              read_more_label: section.settings.read_more_label
+            -%}
+          </li>
+        {%- endfor -%}
+      {%- else -%}
+        {%- for i in (1..limit) -%}
+          <li class="carousel__slide">
+            {%- render 'article-card', index: forloop.index0, read_more_label: section.settings.read_more_label -%}
+          </li>
+        {%- endfor -%}
+      {%- endif -%}
+    </ul>
+
+    {%- render 'carousel-arrows' -%}
+  </carousel-slider>
+
+  {%- if section.settings.button_label != blank -%}
+    <div class="blog-posts__footer">
+      <a href="{{ button_url }}" class="button button--primary blog-posts__button">
+        {{- section.settings.button_label | escape -}}
+      </a>
+    </div>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .blog-posts {
+    padding-block: 2.5rem;
+  }
+
+  /* Doble clase: si no, el valor por defecto de .carousel (2.15) gana según el orden del CSS */
+  .carousel.blog-posts__carousel {
+    --carousel-peek-mobile: 1;
+    --carousel-peek-tablet: 2.3;
+  }
+
+  .blog-posts__footer {
+    display: flex;
+    justify-content: center;
+    margin-block-start: 1.75rem;
+  }
+
+  .blog-posts__button {
+    min-height: 2.125rem;
+    padding: 0.25rem 1.125rem;
+    border-radius: 4px;
+    font-size: 1.0625rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  /* Móvil (diseño del usuario): una tarjeta grande (la siguiente asoma), textos de 13–14 px,
+     "Read More" de 148×38 y "View more" de 152×44 */
+  @media (max-width: 749px) {
+    .blog-posts .recipe-card__body {
+      padding: 1.0625rem 1.0625rem 1.1875rem;
+    }
+
+    .blog-posts .recipe-card__meta {
+      font-size: 0.9375rem;
+    }
+
+    .blog-posts .recipe-card__title {
+      margin-block-start: 1.375rem;
+      font-size: 0.9375rem;
+    }
+
+    .blog-posts .recipe-card__excerpt {
+      margin-block-start: 0.5rem;
+      font-size: 0.9375rem;
+    }
+
+    .blog-posts .recipe-card__body > :nth-last-child(2) {
+      margin-block-end: 1rem;
+    }
+
+    .blog-posts .recipe-card__button {
+      min-width: 9.25rem;
+      min-height: 2.375rem;
+      font-size: 1rem;
+    }
+
+    .blog-posts__footer {
+      margin-block-start: 1.9375rem;
+    }
+
+    .blog-posts__button {
+      min-width: 9.5rem;
+      min-height: 2.75rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .blog-posts {
+      padding-block: 3rem;
+    }
+
+    .blog-posts__footer {
+      margin-block-start: 1.9375rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.blog_posts",
+  "tag": "section",
+  "class": "blog-posts-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Recipes"
+    },
+    {
+      "type": "blog",
+      "id": "blog",
+      "label": "t:labels.blog"
+    },
+    {
+      "type": "range",
+      "id": "articles_to_show",
+      "label": "t:labels.articles_to_show",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "t:labels.columns_desktop",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "checkbox",
+      "id": "show_category",
+      "label": "t:labels.show_category",
+      "info": "t:info.blog_category",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "label": "t:labels.show_date",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "read_more_label",
+      "label": "t:labels.read_more_label",
+      "default": "Read More"
+    },
+    {
+      "type": "header",
+      "content": "t:general.buttons"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:labels.button_label",
+      "default": "View more"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:labels.button_link",
+      "info": "t:info.blog_button_link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.blog_posts"
+    }
+  ]
+}
+{% endschema %}

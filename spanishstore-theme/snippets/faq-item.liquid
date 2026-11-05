@@ -1,0 +1,22 @@
+{% doc %}
+  Pregunta de la página FAQ (sections/faq-page.liquid): acordeón con <details>/<summary>.
+  Los estilos están en la sección faq-page. Apertura y cierre animados con assets/accordion.js.
+
+  @param {block} block - Bloque "question" (question, answer, open)
+{% enddoc %}
+
+<details
+  class="faq-page__item"
+  data-accordion
+  {% if block.settings.open %}
+    open
+  {% endif %}
+  data-faq-item
+  {{ block.shopify_attributes }}
+>
+  <summary class="faq-page__question">
+    <span>{{ block.settings.question | escape }}</span>
+    <span class="faq-page__icon" aria-hidden="true"></span>
+  </summary>
+  <div class="faq-page__answer" data-accordion-content>{{ block.settings.answer }}</div>
+</details>

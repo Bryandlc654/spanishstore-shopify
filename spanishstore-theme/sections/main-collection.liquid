@@ -1,0 +1,1381 @@
+{% comment %}
+  Página de tienda / colección.
+  - Cabecera: migas de pan, título y nº de productos (con los filtros aplicados).
+  - Tira de categorías (bloques "category", snippet category-card) en carrusel.
+  - Barra lateral de filtros: los filtros nativos de Shopify (collection.filters), configurados en la
+    app gratuita "Search & Discovery" (categorías/tipo de producto, metacampos, precio, disponibilidad…).
+    Al cambiar un filtro o el orden, los productos se actualizan sin recargar (Section Rendering API)
+    y la URL se actualiza para poder compartirla.
+  - Buscador (busca en toda la tienda) y selector de orden.
+  - Rejilla de productos (snippet product-card) con paginación.
+  - Móvil: botón "Filters" que abre la barra lateral como panel.
+  Página de categoría (cualquier colección que no sea "all", modo automático):
+  - Banner a todo el ancho con la imagen de la colección y su nombre (H1).
+  - Pestañas de subcategoría en vez de la tira de categorías. Salen de un filtro de Shopify
+    (ajuste "Subcategory filter", p. ej. filter.p.m.custom.subcategory); al pulsar una se filtra
+    sin recargar. Si ese filtro no existe en la colección, se usa el menú cuyo handle coincide con
+    el de la colección (Tienda online → Navegación).
+  Resultados de búsqueda (templates/search.json usa esta misma sección): mismo diseño que la tienda,
+  con los filtros y el orden de la búsqueda de Shopify (search.filters / search.sort_options).
+  El contenido está en snippets/shop-listing.liquid; aquí se pagina y se eligen los datos.
+{% endcomment %}
+
+{%- if template.name == 'search' -%}
+  {%- paginate search.results by section.settings.products_per_page -%}
+    {%- liquid
+      assign sort_by = search.sort_by | default: search.default_sort_by
+      assign terms_param = search.terms | url_encode
+      assign clear_url = routes.search_url | append: '?q=' | append: terms_param | append: '&type=product&sort_by=' | append: sort_by
+      if search.terms != blank
+        assign listing_title = 'search.results_for' | t: terms: search.terms
+      else
+        assign listing_title = 'search.title' | t
+      endif
+    -%}
+    {%- render 'shop-listing',
+      section: section,
+      paginate: paginate,
+      items: search.results,
+      products_count: search.results_count,
+      filters: search.filters,
+      sort_options: search.sort_options,
+      sort_by: sort_by,
+      form_url: routes.search_url,
+      clear_url: clear_url,
+      listing_title: listing_title,
+      is_all: true,
+      is_search: true,
+      search_terms: search.terms
+    -%}
+  {%- endpaginate -%}
+{%- else -%}
+  {%- paginate collection.products by section.settings.products_per_page -%}
+    {%- liquid
+      assign sort_by = collection.sort_by | default: collection.default_sort_by
+      assign clear_url = collection.url | append: '?sort_by=' | append: sort_by
+      assign is_all = false
+      if collection.handle == 'all'
+        assign is_all = true
+        assign listing_title = 'collections.all_products' | t
+      else
+        assign listing_title = collection.title
+      endif
+    -%}
+    {%- render 'shop-listing',
+      section: section,
+      paginate: paginate,
+      items: collection.products,
+      products_count: collection.products_count,
+      filters: collection.filters,
+      sort_options: collection.sort_options,
+      sort_by: sort_by,
+      form_url: collection.url,
+      clear_url: clear_url,
+      listing_title: listing_title,
+      is_all: is_all,
+      is_search: false
+    -%}
+  {%- endpaginate -%}
+{%- endif -%}
+
+{% stylesheet %}
+  .main-collection {
+    display: block;
+    padding-block: 1.5rem 3rem;
+  }
+
+  /* Banner de categoría */
+  .collection-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: min(var(--collection-banner-height), 14rem);
+    overflow: hidden;
+    background-color: #2b2b2b;
+    isolation: isolate;
+  }
+
+  .collection-banner__image {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .collection-banner::after {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: '';
+    background-color: rgb(0 0 0 / var(--collection-banner-overlay));
+  }
+
+  .collection-banner__title {
+    margin: 0;
+    padding: 1.5rem var(--page-margin);
+    color: #fff9e4;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  /* Pestañas de subcategoría */
+  .subcategories {
+    grid-area: cats;
+    min-width: 0;
+    margin-inline: calc(var(--page-margin) * -1);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .subcategories::-webkit-scrollbar {
+    display: none;
+  }
+
+  .subcategories__list {
+    display: flex;
+    gap: 0.5rem;
+    width: max-content;
+    margin: 0;
+    padding: 0 var(--page-margin);
+    list-style: none;
+  }
+
+  .subcategories__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.6875rem;
+    padding: 0.25rem 1.25rem;
+    border-radius: 2rem;
+    color: #000;
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .subcategories__link:hover {
+    color: var(--color-accent);
+  }
+
+  .subcategories__link.is-active {
+    background-color: var(--color-accent);
+    color: #fff;
+  }
+
+  .main-collection__layout {
+    display: grid;
+    grid-template-areas:
+      'head'
+      'cats'
+      'main';
+    gap: 1.25rem;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+  }
+
+  .main-collection__head {
+    grid-area: head;
+  }
+
+  .main-collection__categories {
+    grid-area: cats;
+    min-width: 0;
+    margin-inline: calc(var(--page-margin) * -1);
+    --carousel-peek-mobile: 2.4;
+    --carousel-peek-tablet: 4.4;
+  }
+
+  .main-collection__main {
+    grid-area: main;
+    min-width: 0;
+  }
+
+  .main-collection__title {
+    margin: 1.0625rem 0 0;
+    color: #000;
+    font-size: 1.4375rem;
+    font-weight: 400;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .main-collection__count {
+    margin: 0.75rem 0 0;
+    color: #646b7c;
+    font-size: 0.9375rem;
+  }
+
+  /* Barra lateral de filtros (móvil: panel lateral) */
+  .filters {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(88vw, 22rem);
+    overflow-y: auto;
+    background-color: #fff;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s;
+  }
+
+  /* Al abrir, la visibilidad cambia al instante (así el botón de cerrar puede recibir el foco) */
+  .filters.is-open {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.25s ease, visibility 0s;
+  }
+
+  .filters__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background-color: rgb(0 0 0 / 0.45);
+  }
+
+  .filters__form {
+    padding: 1.375rem 1.3125rem 1.5rem;
+  }
+
+  .filters__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-block-end: 0.5625rem;
+    border-bottom: 1px solid #f4f0e2;
+  }
+
+  .filters__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .filters__clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-inline-start: auto;
+    color: var(--color-accent);
+    font-size: 0.9375rem;
+    text-decoration: none;
+  }
+
+  .filters__clear svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .filters__clear:hover {
+    text-decoration: underline;
+  }
+
+  .filters__close {
+    display: flex;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #000;
+    cursor: pointer;
+  }
+
+  .filters__close svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .filters__group {
+    margin: 0;
+    padding: 1.4375rem 0 1.25rem;
+    border: 0;
+    border-bottom: 1px solid #f4f0e2;
+  }
+
+  .filters__group:last-child {
+    border-bottom: 0;
+    padding-block-end: 0;
+  }
+
+  .filters__group-title {
+    float: left;
+    width: 100%;
+    margin-block-end: 0.875rem;
+    padding: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .filters__options {
+    clear: both;
+    display: grid;
+    gap: 0.6875rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .filter-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.9375rem;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+
+  .filter-option__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .filter-option__box {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 0.8125rem;
+    height: 0.8125rem;
+    border: 1px solid #555;
+    border-radius: 2px;
+    color: #fff;
+  }
+
+  .filter-option__box svg {
+    width: 0.6875rem;
+    height: 0.6875rem;
+    opacity: 0;
+  }
+
+  .filter-option__input:checked + .filter-option__box {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+  }
+
+  .filter-option__input:checked + .filter-option__box svg {
+    opacity: 1;
+  }
+
+  .filter-option__input:focus-visible + .filter-option__box {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .filter-option__input:disabled ~ * {
+    opacity: 0.4;
+  }
+
+  .filter-option__label {
+    flex: 1;
+  }
+
+  .filter-option__count {
+    color: #000;
+  }
+
+  .filters__empty {
+    margin: 1rem 0 0;
+    color: #646b7c;
+    font-size: 0.875rem;
+  }
+
+  /* Rango de precio (dos deslizadores superpuestos) */
+  .price-range__slider {
+    position: relative;
+    height: 0.75rem;
+    clear: both;
+  }
+
+  .price-range__track {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    left: 0;
+    height: 0.3125rem;
+    border-radius: 1rem;
+    background-color: #d9d9d9;
+    translate: 0 -50%;
+  }
+
+  .price-range__fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--fill-start, 0%);
+    right: calc(100% - var(--fill-end, 100%));
+    border-radius: inherit;
+    background-color: var(--color-accent);
+  }
+
+  .price-range__input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    background: none;
+    pointer-events: none;
+    appearance: none;
+  }
+
+  .price-range__input::-webkit-slider-thumb {
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    cursor: pointer;
+    pointer-events: auto;
+    appearance: none;
+  }
+
+  .price-range__input::-moz-range-thumb {
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .price-range__input:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .price-range__labels {
+    display: flex;
+    justify-content: space-between;
+    margin-block-start: 0.875rem;
+    color: #646b7c;
+    font-size: 0.875rem;
+  }
+
+  /* Título de grupo: botón (acordeón) solo en móvil/tablet; en desktop se ve como texto */
+  .filters__group-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  .filters__group-label {
+    flex: 1;
+  }
+
+  .filters__active,
+  .filters__footer,
+  .filters__group-count,
+  .filters__group-chevron,
+  .price-range__fields {
+    display: none;
+  }
+
+  /* Móvil/tablet (diseño del usuario a 375 px): hoja que sube desde abajo con esquinas redondeadas,
+     "Filters" + ✕, chips de los filtros activos, grupos plegables de 50 px (nombre, nº de opciones y flecha),
+     precio con campos Min/Max y botones "View all" (rojo) y "Clear" (borde rojo) */
+  @media (max-width: 989px) {
+    .filters {
+      inset: auto 0 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-height: calc(100dvh - 1.625rem);
+      overflow: hidden;
+      border-radius: 1.25rem 1.25rem 0 0;
+      transform: translateY(100%);
+    }
+
+    .filters__form {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+      padding: 0;
+    }
+
+    .filters__header {
+      padding: 1.75rem 1.0625rem 1rem;
+      border-bottom: 0;
+    }
+
+    .filters__title {
+      font-size: 1.1875rem;
+      font-weight: 400;
+    }
+
+    .filters__header .filters__clear {
+      display: none;
+    }
+
+    .filters__close svg {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+
+    .filters__body {
+      flex: 1;
+      min-height: 0;
+      padding: 0 1.0625rem;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .filters__active {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.8125rem;
+      margin: 0;
+      padding: 0 0 1.25rem;
+      border-bottom: 1px solid #ececec;
+      list-style: none;
+    }
+
+    .filters__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-height: 2.5rem;
+      padding: 0 0.75rem;
+      border-radius: 3px;
+      background-color: #f8e8e9;
+      color: var(--color-accent);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .filters__chip span {
+      font-weight: 400;
+    }
+
+    .filters__group,
+    .filters__group:last-child {
+      padding: 0;
+      border-bottom: 1px solid #ececec;
+    }
+
+    .filters__group-title {
+      float: none;
+      margin: 0;
+      font-size: 0.9375rem;
+      font-weight: 700;
+    }
+
+    .filters__group-toggle {
+      min-height: 3.125rem;
+      padding: 0 0.5625rem;
+      cursor: pointer;
+    }
+
+    .filters__group-count {
+      display: block;
+      color: #a8a8a8;
+      font-size: 0.9375rem;
+    }
+
+    .filters__group-chevron {
+      display: block;
+      flex-shrink: 0;
+      width: 0.75rem;
+      height: 0.75rem;
+      margin-inline-start: 0.875rem;
+      transition: rotate 0.2s ease;
+    }
+
+    .filters__group.is-open .filters__group-chevron {
+      rotate: -90deg;
+    }
+
+    .filters__group:not(.is-open) .filters__group-content {
+      display: none;
+    }
+
+    .filters__group-content {
+      padding: 0 0.5625rem 1.125rem;
+    }
+
+    .filter-option {
+      gap: 0.75rem;
+      color: #646b7c;
+      font-size: 0.9375rem;
+    }
+
+    .filter-option__box {
+      width: 1.0625rem;
+      height: 1.0625rem;
+      border-color: #777;
+    }
+
+    .filter-option__count {
+      color: #a8a8a8;
+    }
+
+    .price-range__slider,
+    .price-range__labels {
+      display: none;
+    }
+
+    .price-range__fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.875rem;
+    }
+
+    .price-range__field-label {
+      display: block;
+      margin-block-end: 0.5rem;
+      color: #646b7c;
+      font-size: 0.9375rem;
+    }
+
+    .price-range__field-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .price-range__symbol {
+      position: absolute;
+      left: 0.625rem;
+      font-size: 0.9375rem;
+      pointer-events: none;
+    }
+
+    .price-range__field-box input {
+      width: 100%;
+      height: 2.25rem;
+      padding: 0 0.625rem 0 1.375rem;
+      border: 1px solid #e5e5e5;
+      border-radius: 3px;
+      background: #fff;
+      color: #000;
+      font: inherit;
+      font-size: 0.9375rem;
+      appearance: textfield;
+    }
+
+    .price-range__field-box input:focus-visible {
+      border-color: var(--color-accent);
+      outline: none;
+    }
+
+    .filters__footer {
+      display: flex;
+      gap: 0.8125rem;
+      padding: 1.25rem 1.0625rem 1.375rem;
+    }
+
+    .filters__apply,
+    .filters__reset {
+      display: flex;
+      flex: 1 1 0;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.9375rem;
+      border: 1px solid var(--color-accent);
+      border-radius: 3px;
+      font: inherit;
+      font-size: 1rem;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .filters__apply {
+      background-color: var(--color-accent);
+      color: #fff;
+    }
+
+    .filters__reset {
+      background-color: #fff;
+      color: var(--color-accent);
+    }
+  }
+
+  /* Barra de herramientas */
+  .collection-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-block-end: 1.5rem;
+  }
+
+  .collection-toolbar__search {
+    position: relative;
+    display: flex;
+    flex: 1 1 100%;
+    align-items: center;
+  }
+
+  .collection-toolbar__search svg {
+    position: absolute;
+    left: 1rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    color: #000;
+    pointer-events: none;
+  }
+
+  .collection-toolbar__search input {
+    width: 100%;
+    height: 2.5625rem;
+    padding: 0 1rem 0 2.75rem;
+    border: 1px solid #f4f0e2;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    appearance: none;
+  }
+
+  .collection-toolbar__search input::placeholder {
+    color: #6b6b6b;
+  }
+
+  .collection-toolbar__search input:focus-visible {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+
+  .collection-toolbar__filters-button {
+    min-height: 2.5625rem;
+    padding: 0 1rem;
+    border: 1px solid #f4f0e2;
+    border-radius: 6px;
+    background: #fff;
+    color: #000;
+    font: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+
+  .collection-toolbar__sort {
+    display: flex;
+    align-items: center;
+    gap: 0.6875rem;
+    margin-inline-start: auto;
+    font-size: 0.9375rem;
+  }
+
+  .collection-toolbar__select {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .collection-toolbar__select select {
+    height: 2.5625rem;
+    padding: 0 2.25rem 0 0.875rem;
+    border: 1px solid #f4f0e2;
+    border-radius: 6px;
+    background: #fff;
+    color: #000;
+    font-size: 0.875rem;
+    cursor: pointer;
+    appearance: none;
+  }
+
+  .collection-toolbar__select select:focus-visible {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+
+  .collection-toolbar__select svg {
+    position: absolute;
+    right: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    pointer-events: none;
+  }
+
+  /* Rejilla de productos */
+  .main-collection__products {
+    transition: opacity 0.2s ease;
+  }
+
+  .main-collection__products.is-loading {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .main-collection__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .main-collection__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 3rem 1rem;
+    text-align: center;
+  }
+
+  .main-collection__empty-title {
+    margin: 0;
+    font-size: 1.0625rem;
+  }
+
+  .collection-toolbar__icon,
+  .collection-toolbar__sort-button {
+    display: none;
+  }
+
+  /* Tienda y categorías en móvil (diseño del usuario, a 375 px): migas de 14 px, título de 28 px en negrita,
+     recuento de 14 px, tarjetas de categoría de 185×104, sin buscador, "Filters" (con nº de filtros) y "Sort"
+     del mismo ancho con borde rojo claro, y rejilla de 2 columnas con 17 px de separación */
+  @media (max-width: 749px) {
+    .main-collection .breadcrumb ol {
+      font-size: 0.9375rem;
+    }
+
+    .main-collection__title {
+      margin-block-start: 1.5rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .main-collection__count {
+      margin-block-start: 0.875rem;
+      font-size: 0.9375rem;
+    }
+
+    /* Doble clase: el valor por defecto de .carousel tiene la misma especificidad y ganaría */
+    .carousel.main-collection__categories {
+      --carousel-peek-mobile: 1.75;
+    }
+
+    .main-collection__categories .category-card__title {
+      font-size: 1.0625rem;
+    }
+
+    .collection-toolbar {
+      flex-wrap: nowrap;
+      gap: 0.9375rem;
+      margin-block-end: 1.75rem;
+    }
+
+    .collection-toolbar__search,
+    .collection-toolbar__sort > label,
+    .collection-toolbar__select svg {
+      display: none;
+    }
+
+    .collection-toolbar__filters-button,
+    .collection-toolbar__sort {
+      position: relative;
+      display: flex;
+      flex: 1 1 0;
+      align-items: center;
+      justify-content: center;
+      gap: 0.625rem;
+      min-height: 2.6875rem;
+      margin: 0;
+      padding: 0 0.75rem;
+      border: 1px solid #e6a8ad;
+      border-radius: 4px;
+      background: #fff;
+      color: #000;
+      font-size: 1.0625rem;
+    }
+
+    .collection-toolbar__icon {
+      display: block;
+      flex-shrink: 0;
+      width: 1rem;
+      height: 1rem;
+      color: var(--color-accent);
+    }
+
+    .collection-toolbar__sort-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .collection-toolbar__count {
+      display: grid;
+      place-items: center;
+      min-width: 1.3125rem;
+      height: 1.3125rem;
+      padding-inline: 0.25rem;
+      border-radius: 1rem;
+      background-color: var(--color-accent);
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    /* El select ocupa todo el botón "Sort", transparente: al tocarlo se abre el selector del móvil */
+    .collection-toolbar__select {
+      position: absolute;
+      inset: 0;
+    }
+
+    .collection-toolbar__select select {
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+    }
+
+    .collection-toolbar__sort:focus-within {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    .main-collection__grid {
+      gap: 1.75rem 1.0625rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .main-collection__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 0.9375rem;
+    }
+
+    .collection-toolbar__search {
+      flex: 0 1 25.75rem;
+    }
+  }
+
+  @media (min-width: 990px) {
+    .main-collection {
+      padding-block-start: 1.75rem;
+    }
+
+    .main-collection__layout {
+      grid-template-columns: 16.9375rem minmax(0, 1fr);
+      grid-template-areas:
+        'head cats'
+        'side main';
+      column-gap: 1.3125rem;
+      row-gap: 1.25rem;
+    }
+
+    .main-collection__categories {
+      width: 100%;
+      margin-inline: 0;
+    }
+
+    .collection-banner {
+      min-height: var(--collection-banner-height);
+    }
+
+    /* Con banner, algo más de aire entre el banner y la cabecera de la lista */
+    .collection-banner + .main-collection {
+      padding-block-start: 2.25rem;
+    }
+
+    .collection-banner__title {
+      font-size: 2.8125rem;
+    }
+
+    .subcategories {
+      align-self: center;
+      margin-inline: 0;
+      overflow: visible;
+    }
+
+    .subcategories__list {
+      flex-wrap: wrap;
+      gap: 0.5rem 0;
+      width: auto;
+      padding: 0;
+    }
+
+    /* En desktop la barra lateral es una caja fija en su columna */
+    /* z-index: auto: el 40 del panel móvil, en un elemento de grid, lo pondría por encima de la cabecera fija */
+    .filters {
+      position: static;
+      z-index: auto;
+      grid-area: side;
+      align-self: start;
+      width: auto;
+      overflow: visible;
+      border: 1px solid #f4f0e2;
+      border-radius: 8px;
+      transform: none;
+      visibility: visible;
+      transition: none;
+    }
+
+    .filters__overlay,
+    .filters__close,
+    .collection-toolbar__filters-button {
+      display: none;
+    }
+
+    .collection-toolbar {
+      flex-wrap: nowrap;
+      margin-block-end: 1.9375rem;
+    }
+
+    .main-collection__grid {
+      row-gap: 2rem;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class CollectionFilters extends HTMLElement {
+    connectedCallback() {
+      this.sectionId = this.dataset.sectionId;
+      // Móvil/tablet: los títulos de grupo pliegan; en desktop no se tabulan
+      this.compact = window.matchMedia('(max-width: 989px)');
+      this.compact.addEventListener('change', () => this.syncGroups());
+      this.bind();
+      this.syncGroups();
+
+      // Botón atrás/adelante del navegador: recarga los productos de esa URL
+      window.addEventListener('popstate', () => this.render(window.location.search.slice(1), false));
+    }
+
+    get form() {
+      return this.querySelector('[data-filters-form]');
+    }
+
+    bind() {
+      this.form?.addEventListener('change', (event) => {
+        if (event.target.matches('[data-price-min], [data-price-max]')) return;
+        this.submit();
+      });
+      this.querySelector('[data-sort]')?.addEventListener('change', () => this.submit());
+
+      this.querySelectorAll('[data-price-range]').forEach((range) => this.setupPrice(range));
+
+      this.addEventListener('click', (event) => {
+        const groupToggle = event.target.closest('[data-filter-toggle]');
+        if (groupToggle && this.compact.matches) {
+          const group = groupToggle.closest('[data-filter-group]');
+          const open = !group.classList.contains('is-open');
+          group.classList.toggle('is-open', open);
+          groupToggle.setAttribute('aria-expanded', String(open));
+          return;
+        }
+        const filterLink = event.target.closest('[data-filter-link]');
+        if (filterLink) {
+          event.preventDefault();
+          const isPage = filterLink.hasAttribute('data-page-link');
+          this.render(new URL(filterLink.href, window.location.origin).search.slice(1)).then(() => {
+            // Paginación: vuelve arriba de la lista (la cabecera fija se descuenta con scroll-margin, en critical.css)
+            if (isPage) this.querySelector('.main-collection__main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+          return;
+        }
+        const clear = event.target.closest('[data-filters-clear]');
+        if (clear) {
+          event.preventDefault();
+          this.render(new URL(clear.href, window.location.origin).search.slice(1));
+        }
+        if (event.target.closest('[data-filters-open]')) this.toggle(true);
+        if (event.target.closest('[data-filters-close]')) this.toggle(false);
+      });
+      // Escape cierra el panel de filtros (móvil) esté donde esté el foco
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && this.querySelector('[data-filters]')?.classList.contains('is-open')) {
+          this.toggle(false);
+        }
+      });
+    }
+
+    syncGroups() {
+      this.querySelectorAll('[data-filter-toggle]').forEach((button) => {
+        if (this.compact.matches) {
+          button.removeAttribute('tabindex');
+          button.setAttribute('aria-expanded', String(button.closest('[data-filter-group]').classList.contains('is-open')));
+        } else {
+          button.setAttribute('tabindex', '-1');
+          button.removeAttribute('aria-expanded');
+        }
+      });
+    }
+
+    // Panel de filtros en móvil
+    toggle(open) {
+      const panel = this.querySelector('[data-filters]');
+      const overlay = this.querySelector('.filters__overlay');
+      const button = this.querySelector('[data-filters-open]');
+      if (!panel) return;
+      panel.classList.toggle('is-open', open);
+      if (overlay) overlay.hidden = !open;
+      button?.setAttribute('aria-expanded', String(open));
+      document.documentElement.style.overflow = open ? 'hidden' : '';
+      // El foco pasa al botón de cerrar cuando el panel ya es visible
+      if (open) setTimeout(() => panel.querySelector('[data-filters-close]')?.focus(), 50);
+      else if (button && panel.contains(document.activeElement)) button.focus();
+    }
+
+    setupPrice(range) {
+      const min = range.querySelector('[data-price-min]');
+      const max = range.querySelector('[data-price-max]');
+      const fill = range.querySelector('[data-price-fill]');
+      const total = Number(range.dataset.max) || 1;
+      const currency = range.dataset.currency || '';
+
+      const paint = () => {
+        // Los dos deslizadores no se cruzan
+        if (Number(min.value) > Number(max.value)) {
+          if (document.activeElement === min) min.value = max.value;
+          else max.value = min.value;
+        }
+        fill.style.setProperty('--fill-start', `${(min.value / total) * 100}%`);
+        fill.style.setProperty('--fill-end', `${(max.value / total) * 100}%`);
+        range.querySelector('[data-price-min-label]').textContent = `${min.value} ${currency}`;
+        range.querySelector('[data-price-max-label]').textContent = `${max.value} ${currency}`;
+      };
+
+      [min, max].forEach((input) => {
+        input.addEventListener('input', paint);
+        input.addEventListener('change', () => this.submit());
+      });
+
+      // Campos Min / Max (móvil): copian su valor a los deslizadores
+      const fields = {
+        min: range.querySelector('[data-price-field="min"]'),
+        max: range.querySelector('[data-price-field="max"]'),
+      };
+      Object.entries(fields).forEach(([key, field]) => {
+        field?.addEventListener('change', () => {
+          const value = Math.min(Math.max(Math.round(Number(field.value) || 0), 0), total);
+          (key === 'min' ? min : max).value = value;
+          paint();
+          this.submit();
+        });
+      });
+      const paintFields = () => {
+        if (fields.min && document.activeElement !== fields.min) fields.min.value = min.value;
+        if (fields.max && document.activeElement !== fields.max) fields.max.value = max.value;
+      };
+      [min, max].forEach((input) => input.addEventListener('input', paintFields));
+      paint();
+      paintFields();
+    }
+
+    params() {
+      const data = new FormData(this.form);
+      // Quita el precio si cubre todo el rango (para no añadir un filtro inútil a la URL)
+      this.querySelectorAll('[data-price-range]').forEach((range) => {
+        const min = range.querySelector('[data-price-min]');
+        const max = range.querySelector('[data-price-max]');
+        if (Number(min.value) <= 0) data.delete(min.name);
+        if (Number(max.value) >= Number(range.dataset.max)) data.delete(max.name);
+      });
+      return new URLSearchParams(data).toString();
+    }
+
+    submit() {
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => this.render(this.params()), 300);
+    }
+
+    async render(query, push = true) {
+      const products = this.querySelector('[data-products]');
+      products?.classList.add('is-loading');
+      const url = `${window.location.pathname}?${query}`;
+      const focusedId = document.activeElement?.id;
+      // Grupos abiertos a mano: siguen abiertos tras actualizar
+      const openGroups = [...this.querySelectorAll('[data-filter-group].is-open')].map((group) => group.dataset.filterGroup);
+
+      try {
+        const response = await fetch(`${url}${query ? '&' : ''}section_id=${this.sectionId}`);
+        if (!response.ok) throw new Error(response.statusText);
+        const html = new DOMParser().parseFromString(await response.text(), 'text/html');
+
+        [
+          '[data-products]',
+          '[data-collection-count]',
+          '[data-collection-title]',
+          '[data-filters-body]',
+          '[data-filters-open]',
+          '[data-subcategories]',
+        ].forEach((selector) => {
+          const next = html.querySelector(selector);
+          const current = this.querySelector(selector);
+          if (next && current) current.replaceWith(next);
+        });
+        this.querySelectorAll('[data-price-range]').forEach((range) => this.setupPrice(range));
+        openGroups.forEach((name) => this.querySelector(`[data-filter-group="${name}"]`)?.classList.add('is-open'));
+        this.syncGroups();
+        if (focusedId) document.getElementById(focusedId)?.focus();
+        if (push) history.pushState({}, '', url);
+      } catch (error) {
+        // Si falla la actualización parcial, se navega a la URL normal
+        window.location.href = url;
+      }
+    }
+  }
+
+  if (!customElements.get('collection-filters')) {
+    customElements.define('collection-filters', CollectionFilters);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:general.main_collection",
+  "tag": "section",
+  "class": "main-collection-section",
+  "max_blocks": 16,
+  "settings": [
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "t:labels.products_per_page",
+      "min": 6,
+      "max": 48,
+      "step": 3,
+      "default": 24
+    },
+    {
+      "type": "select",
+      "id": "top_nav",
+      "label": "t:labels.top_nav",
+      "info": "t:info.top_nav",
+      "options": [
+        { "value": "auto", "label": "t:options.top_nav.auto" },
+        { "value": "categories", "label": "t:options.top_nav.categories" },
+        { "value": "subcategories", "label": "t:options.top_nav.subcategories" },
+        { "value": "none", "label": "t:options.top_nav.none" }
+      ],
+      "default": "auto"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_categories",
+      "label": "t:labels.show_categories",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "subcategory_filter",
+      "label": "t:labels.subcategory_filter",
+      "info": "t:info.subcategory_filter",
+      "default": "filter.p.m.custom.subcategory"
+    },
+    {
+      "type": "header",
+      "content": "t:general.category_banner"
+    },
+    {
+      "type": "select",
+      "id": "banner_mode",
+      "label": "t:labels.banner_mode",
+      "options": [
+        { "value": "categories", "label": "t:options.banner_mode.categories" },
+        { "value": "always", "label": "t:options.banner_mode.always" },
+        { "value": "none", "label": "t:options.banner_mode.none" }
+      ],
+      "default": "categories"
+    },
+    {
+      "type": "range",
+      "id": "banner_height",
+      "label": "t:labels.height_desktop",
+      "min": 150,
+      "max": 500,
+      "step": 5,
+      "unit": "px",
+      "default": 285
+    },
+    {
+      "type": "range",
+      "id": "banner_overlay",
+      "label": "t:labels.overlay_opacity",
+      "info": "t:info.category_banner",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 45
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "t:labels.show_search",
+      "default": true
+    },
+    {
+      "type": "paragraph",
+      "content": "t:info.collection_filters"
+    },
+    {
+      "type": "header",
+      "content": "t:general.product_card"
+    },
+    {
+      "type": "select",
+      "id": "badge_source",
+      "label": "t:labels.badge_source",
+      "options": [
+        { "value": "type", "label": "t:options.badge_source.type" },
+        { "value": "vendor", "label": "t:options.badge_source.vendor" },
+        { "value": "none", "label": "t:options.badge_source.none" }
+      ],
+      "default": "type"
+    },
+    {
+      "type": "text",
+      "id": "tax_note",
+      "label": "t:labels.tax_note",
+      "default": "VAT included. Free shipping."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "label": "t:labels.show_rating",
+      "info": "t:info.product_rating",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "t:general.category",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "t:labels.collection"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:labels.title",
+          "info": "t:info.category_title"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:labels.image",
+          "info": "t:info.category_image"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

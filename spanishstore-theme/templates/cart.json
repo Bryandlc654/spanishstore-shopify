@@ -1,0 +1,84 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-cart",
+      "settings": {
+        "heading": "Shopping cart",
+        "free_shipping_threshold": 80,
+        "show_express_checkout": true,
+        "continue_link": "",
+        "secure_text": "100% secure payment",
+        "tax_note": "VAT included. Free shipping."
+      }
+    },
+    "you_may_also_like": {
+      "type": "product-carousel",
+      "settings": {
+        "heading": "You may also like",
+        "view_all_label": "View all",
+        "view_all_link": "",
+        "source": "related",
+        "products_to_show": 8,
+        "columns": 4,
+        "show_arrows": true,
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true
+      }
+    },
+    "pack_banner": {
+      "type": "hero",
+      "settings": {
+        "background": "#FDF3E6",
+        "overlay_opacity": 0,
+        "layout": "contained",
+        "height": 205,
+        "height_mobile": 250,
+        "content_position": "center",
+        "text_color": "#000000",
+        "show_rating": false,
+        "heading": "Your perfect pack, your way",
+        "heading_tag": "h2",
+        "uppercase_heading": false,
+        "text": "<p>Mix your favorite Spanish flavours in one delicious selection.</p>",
+        "text_size": "xsmall",
+        "uppercase_buttons": false,
+        "button_label_1": "Create your pack",
+        "button_link_1": "/#pack-builder",
+        "button_label_2": "",
+        "default_image": "pack"
+      }
+    },
+    "ham_day": {
+      "type": "countdown-bar",
+      "settings": {
+        "mode": "daily",
+        "heading": "Today is Ham Day",
+        "subheading": "September 28",
+        "end_date": "",
+        "end_time": "23:59",
+        "when_expired": "hide",
+        "badge_label": "-15% + GIFT",
+        "badge_link": "",
+        "background": "#000000",
+        "text_color": "#FFFFFF",
+        "show_pattern": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "you_may_also_like",
+    "pack_banner",
+    "ham_day"
+  ]
+}

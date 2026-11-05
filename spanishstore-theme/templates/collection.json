@@ -1,0 +1,257 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-collection",
+      "blocks": {
+        "category_1": {
+          "type": "category",
+          "settings": {
+            "title": "Charcuterie"
+          }
+        },
+        "category_2": {
+          "type": "category",
+          "settings": {
+            "title": "Seafood"
+          }
+        },
+        "category_3": {
+          "type": "category",
+          "settings": {
+            "title": "Cheese"
+          }
+        },
+        "category_4": {
+          "type": "category",
+          "settings": {
+            "title": "Paella"
+          }
+        },
+        "category_5": {
+          "type": "category",
+          "settings": {
+            "title": "Snacks & Desserts"
+          }
+        },
+        "category_6": {
+          "type": "category",
+          "settings": {
+            "title": "Gift & Sets"
+          }
+        },
+        "category_7": {
+          "type": "category",
+          "settings": {
+            "title": "Beverages"
+          }
+        },
+        "category_8": {
+          "type": "category",
+          "settings": {
+            "title": "Pantry"
+          }
+        }
+      },
+      "block_order": [
+        "category_1",
+        "category_2",
+        "category_3",
+        "category_4",
+        "category_5",
+        "category_6",
+        "category_7",
+        "category_8"
+      ],
+      "settings": {
+        "products_per_page": 24,
+        "show_categories": true,
+        "show_search": true,
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true,
+        "top_nav": "auto",
+        "subcategory_filter": "filter.p.m.custom.subcategory",
+        "banner_mode": "categories",
+        "banner_height": 285,
+        "banner_overlay": 45
+      }
+    },
+    "collection_banner": {
+      "type": "hero",
+      "settings": {
+        "layout": "contained",
+        "overlay_opacity": 75,
+        "height": 210,
+        "height_mobile": 480,
+        "content_position": "center",
+        "text_color": "#FFFFFF",
+        "show_rating": false,
+        "rating": 5,
+        "rating_text": "",
+        "rating_link": "",
+        "star_color": "#BE1621",
+        "heading": "Discover your next favorite cheese",
+        "heading_tag": "h2",
+        "uppercase_heading": false,
+        "text": "<p>Lorem ipsum dolor sit amet consectetur. Velit est sit.</p>",
+        "text_size": "small",
+        "button_label_1": "View more",
+        "button_link_1": "",
+        "button_label_2": "",
+        "button_link_2": ""
+      }
+    },
+    "collection_featured": {
+      "type": "product-grid",
+      "settings": {
+        "heading": "",
+        "products_to_show": 7,
+        "columns": 4,
+        "row_gap": 32,
+        "show_promo": true,
+        "promo_heading": "Your Spanish favorites are waiting",
+        "promo_text": "Lorem ipsum dolor sit amet consectetur. Velit est sit.",
+        "promo_button_label": "View more",
+        "promo_button_link": "",
+        "promo_background": "#BE1621",
+        "promo_text_color": "#FFFFFF",
+        "promo_button_background": "#E9E3D1",
+        "promo_button_text": "#000000",
+        "button_label": "",
+        "button_link": "",
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true,
+        "mobile_add_button": true
+      }
+    },
+    "tapas_help": {
+      "type": "image-with-list",
+      "blocks": {
+        "item_1": {
+          "type": "item",
+          "settings": {
+            "text": "Explore products by category"
+          }
+        },
+        "item_2": {
+          "type": "item",
+          "settings": {
+            "text": "Pair cheese, charcuterie and pantry favorites."
+          }
+        },
+        "item_3": {
+          "type": "item",
+          "settings": {
+            "text": "Build a pack that suits your table."
+          }
+        }
+      },
+      "block_order": [
+        "item_1",
+        "item_2",
+        "item_3"
+      ],
+      "settings": {
+        "image_position": "right",
+        "heading": "A little help for your next",
+        "heading_highlight": "Tapas night.",
+        "button_label": "Discover the collection",
+        "button_link": "",
+        "background": "#FAF8F1",
+        "highlight_color": "#BE1621"
+      }
+    },
+    "faq": {
+      "type": "faq",
+      "blocks": {
+        "question_1": {
+          "type": "question",
+          "settings": {
+            "question": "What Spanish products can I find in your store?",
+            "answer": "<p>Lorem ipsum dolor sit amet consectetur. Aliquam at in tios tincidunt accumsan tellus egestas diam risus. Odio amet pretium egestas varius risus pellentesque diam imperdiet. Velit metus velit enim feugiat at viverra. Gravida elit erat vel maecenas.</p>",
+            "open": true
+          }
+        },
+        "question_2": {
+          "type": "question",
+          "settings": {
+            "question": "Do you ship across Canada?",
+            "answer": "<p>Lorem ipsum dolor sit amet consectetur. Aliquam at in tios tincidunt accumsan tellus egestas diam risus. Odio amet pretium egestas varius risus pellentesque diam imperdiet. Velit metus velit enim feugiat at viverra. Gravida elit erat vel maecenas.</p>",
+            "open": false
+          }
+        },
+        "question_3": {
+          "type": "question",
+          "settings": {
+            "question": "How are the products kept fresh during shipping?",
+            "answer": "<p>Lorem ipsum dolor sit amet consectetur. Aliquam at in tios tincidunt accumsan tellus egestas diam risus. Odio amet pretium egestas varius risus pellentesque diam imperdiet. Velit metus velit enim feugiat at viverra. Gravida elit erat vel maecenas.</p>",
+            "open": false
+          }
+        },
+        "question_4": {
+          "type": "question",
+          "settings": {
+            "question": "Are hams and cured meats sold by weight or by piece?",
+            "answer": "<p>Lorem ipsum dolor sit amet consectetur. Aliquam at in tios tincidunt accumsan tellus egestas diam risus. Odio amet pretium egestas varius risus pellentesque diam imperdiet. Velit metus velit enim feugiat at viverra. Gravida elit erat vel maecenas.</p>",
+            "open": false
+          }
+        },
+        "question_5": {
+          "type": "question",
+          "settings": {
+            "question": "Can I order wine along with other Spanish products?",
+            "answer": "<p>Lorem ipsum dolor sit amet consectetur. Aliquam at in tios tincidunt accumsan tellus egestas diam risus. Odio amet pretium egestas varius risus pellentesque diam imperdiet. Velit metus velit enim feugiat at viverra. Gravida elit erat vel maecenas.</p>",
+            "open": false
+          }
+        }
+      },
+      "block_order": [
+        "question_1",
+        "question_2",
+        "question_3",
+        "question_4",
+        "question_5"
+      ],
+      "settings": {
+        "heading": "Frequently Asked Questions",
+        "button_label": "View more",
+        "button_link": "",
+        "structured_data": true
+      }
+    },
+    "ham_day": {
+      "type": "countdown-bar",
+      "settings": {
+        "mode": "daily",
+        "heading": "Today is Ham Day",
+        "subheading": "September 28",
+        "end_date": "",
+        "end_time": "23:59",
+        "when_expired": "hide",
+        "badge_label": "-15% + GIFT",
+        "badge_link": "",
+        "background": "#000000",
+        "text_color": "#FFFFFF",
+        "show_pattern": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "collection_banner",
+    "collection_featured",
+    "tapas_help",
+    "faq",
+    "ham_day"
+  ]
+}

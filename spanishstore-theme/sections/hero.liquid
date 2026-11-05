@@ -1,0 +1,806 @@
+{% comment %}
+  Hero principal: imagen de fondo a todo el ancho con degradado oscuro,
+  valoración con estrellas, titular, texto y dos botones.
+  - Desktop: degradado de izquierda (oscuro) a derecha, contenido a la izquierda.
+  - Móvil: degradado de abajo hacia arriba, contenido abajo. Admite una imagen distinta para móvil.
+  Si no se sube imagen, se usan assets/hero-default.jpg y hero-default-mobile.jpg.
+  El punto focal de la imagen (definido en Shopify) se respeta con object-position.
+  Ancho "contained": banner dentro del contenedor con esquinas redondeadas y margen arriba/abajo
+  (p. ej. el banner "Discover your next favorite cheese").
+  Text size "Extra small" + botones sin mayúsculas: banner bajo y claro (p. ej. "Your perfect pack,
+  your way" en la ficha). "Default image" elige la foto sin imagen subida: la del hero, la del pack, la de quesos (banner "Discover your next favorite cheese") o ninguna
+  (solo el color de fondo).
+{% endcomment %}
+
+{%- liquid
+  assign image = section.settings.image
+  assign image_mobile = section.settings.image_mobile
+  assign heading_tag = section.settings.heading_tag
+
+  assign focal_point = '50% 50%'
+  assign focal_point_mobile = '50% 50%'
+  if image != blank
+    assign focal_point = image.presentation.focal_point | default: '50% 50%'
+    assign focal_point_mobile = focal_point
+  endif
+  if image_mobile != blank
+    assign focal_point_mobile = image_mobile.presentation.focal_point | default: '50% 50%'
+  endif
+
+  assign overlay = section.settings.overlay_opacity | divided_by: 100.0
+-%}
+
+<div
+  class="hero {% if section.settings.layout == 'contained' %}hero--contained{% if section.settings.mobile_full_width %} hero--mobile-full{% endif %}{% else %}full-width{% endif %} hero--{{ section.settings.content_position }} hero--text-{{ section.settings.text_size }}{% unless section.settings.uppercase_buttons %} hero--buttons-normal-case{% endunless %}"
+  style="--hero-height: {{ section.settings.height | divided_by: 16.0 }}rem; --hero-height-mobile: {{ section.settings.height_mobile | divided_by: 16.0 }}rem; --hero-overlay: {{ overlay }}; --hero-fg: {{ section.settings.text_color }}; --star-color: {{ section.settings.star_color }}; --hero-bg: {{ section.settings.background }};"
+>
+  <picture
+    class="hero__media"
+    style="--hero-focal: {{ focal_point }}; --hero-focal-mobile: {{ focal_point_mobile }};"
+  >
+    {%- if image != blank -%}
+      {%- if image_mobile != blank -%}
+        <source
+          media="(max-width: 749px)"
+          srcset="{{ image_mobile | image_url: width: 375 }} 375w, {{ image_mobile | image_url: width: 750 }} 750w, {{ image_mobile | image_url: width: 1100 }} 1100w"
+          sizes="100vw"
+        >
+      {%- endif -%}
+      {{
+        image
+        | image_url: width: 3000
+        | image_tag:
+          class: 'hero__image',
+          alt: image.alt,
+          widths: '375, 750, 1100, 1500, 1800, 2200, 3000',
+          sizes: '100vw',
+          loading: 'eager',
+          fetchpriority: 'high'
+      }}
+    {%- elsif section.settings.default_image == 'hero' -%}
+      {%- liquid
+        assign hero_mobile_url = 'hero-default-mobile.jpg' | asset_url
+        assign hero_url = 'hero-default.jpg' | asset_url
+      -%}
+      <source
+        media="(max-width: 749px)"
+        srcset="{%- render 'asset-srcset', url: hero_mobile_url, max: 828 -%}"
+        sizes="100vw"
+      >
+      <img
+        class="hero__image"
+        src="{{ hero_url }}"
+        srcset="{%- render 'asset-srcset', url: hero_url, max: 1479 -%}"
+        sizes="100vw"
+        alt=""
+        width="1479"
+        height="2000"
+        fetchpriority="high"
+      >
+    {%- elsif section.settings.default_image == 'cheese' -%}
+      {%- liquid
+        assign cheese_mobile_url = 'cheese-banner-default-mobile.jpg' | asset_url
+        assign cheese_url = 'cheese-banner-default.jpg' | asset_url
+      -%}
+      <source
+        media="(max-width: 749px)"
+        srcset="{%- render 'asset-srcset', url: cheese_mobile_url, max: 900 -%}"
+        sizes="100vw"
+      >
+      <img
+        class="hero__image"
+        src="{{ cheese_url }}"
+        srcset="{%- render 'asset-srcset', url: cheese_url, max: 1334 -%}"
+        sizes="(min-width: 990px) 1152px, 100vw"
+        alt=""
+        width="1334"
+        height="509"
+        loading="lazy"
+      >
+    {%- elsif section.settings.default_image == 'pack' -%}
+      {%- assign pack_url = 'pack-banner-default.jpg' | asset_url -%}
+      <img
+        class="hero__image"
+        src="{{ pack_url }}"
+        srcset="{%- render 'asset-srcset', url: pack_url, max: 2000 -%}"
+        sizes="(min-width: 990px) 1152px, 100vw"
+        alt=""
+        width="2000"
+        height="668"
+        loading="lazy"
+      >
+    {%- endif -%}
+  </picture>
+
+  <div class="hero__container">
+    <div class="hero__content">
+      {%- if section.settings.show_rating -%}
+        <div class="hero__rating">
+          <span
+            class="rating-stars"
+            style="--rating: {{ section.settings.rating }};"
+            role="img"
+            aria-label="{{ 'accessibility.rating' | t: rating: section.settings.rating, max: 5 }}"
+          ></span>
+          {%- if section.settings.rating_text != blank -%}
+            {%- if section.settings.rating_link != blank -%}
+              <a href="{{ section.settings.rating_link }}" class="hero__rating-text">{{ section.settings.rating_text | escape }}</a>
+            {%- else -%}
+              <span class="hero__rating-text">{{ section.settings.rating_text | escape }}</span>
+            {%- endif -%}
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      {%- if section.settings.heading != blank -%}
+        <{{ heading_tag }} class="hero__heading{% if section.settings.uppercase_heading %} hero__heading--uppercase{% endif %}">
+          {{- section.settings.heading | escape | newline_to_br -}}
+        </{{ heading_tag }}>
+      {%- endif -%}
+
+      {%- if section.settings.text != blank -%}
+        <div class="hero__text">{{ section.settings.text }}</div>
+      {%- endif -%}
+
+      {%- if section.settings.button_label_1 != blank or section.settings.button_label_2 != blank -%}
+        <div class="hero__buttons">
+          {%- if section.settings.button_label_1 != blank -%}
+            <a
+              {% if section.settings.button_link_1 != blank %}
+                href="{{ section.settings.button_link_1 }}"
+              {% else %}
+                role="link" aria-disabled="true"
+              {% endif %}
+              class="button button--primary"
+            >
+              {{- section.settings.button_label_1 | escape -}}
+            </a>
+          {%- endif -%}
+          {%- if section.settings.button_label_2 != blank -%}
+            <a
+              {% if section.settings.button_link_2 != blank %}
+                href="{{ section.settings.button_link_2 }}"
+              {% else %}
+                role="link" aria-disabled="true"
+              {% endif %}
+              class="button button--secondary"
+            >
+              {{- section.settings.button_label_2 | escape -}}
+            </a>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .hero {
+    position: relative;
+    display: flex;
+    min-height: var(--hero-height-mobile);
+    overflow: hidden;
+    background-color: var(--hero-bg, #1a1a1a);
+    color: var(--hero-fg);
+    isolation: isolate;
+  }
+
+  .hero__media,
+  .hero::after {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero__media {
+    z-index: -2;
+  }
+
+  .hero__image {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: var(--hero-focal-mobile);
+  }
+
+  /* Degradado oscuro para que el texto se lea (móvil: de abajo hacia arriba) */
+  .hero::after {
+    z-index: -1;
+    content: '';
+    background: linear-gradient(
+      0deg,
+      rgb(0 0 0 / calc(var(--hero-overlay) * 1)) 0%,
+      rgb(0 0 0 / calc(var(--hero-overlay) * 0.75)) 35%,
+      rgb(0 0 0 / calc(var(--hero-overlay) * 0.3)) 70%,
+      rgb(0 0 0 / calc(var(--hero-overlay) * 0.15)) 100%
+    );
+  }
+
+  .hero__container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+    padding-block: 2.5rem;
+  }
+
+  .hero__content {
+    max-width: 32rem;
+  }
+
+  .hero__rating {
+    display: flex;
+    align-items: center;
+    gap: 0.4375rem;
+    margin-block-end: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1;
+  }
+
+  .hero__rating-text {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a.hero__rating-text:hover {
+    text-decoration: underline;
+  }
+
+  .hero__heading {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0.005em;
+  }
+
+  .hero__heading--uppercase {
+    text-transform: uppercase;
+  }
+
+  .hero__text {
+    margin-block-start: 0.625rem;
+    font-size: 1.0625rem;
+    font-weight: 300;
+    line-height: 1.3;
+  }
+
+  .hero__text p {
+    margin: 0;
+  }
+
+  .hero__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-block-start: 1.75rem;
+  }
+
+  .hero__buttons .button {
+    flex: 1 1 auto;
+  }
+
+  /* Con dos botones, ambos con el mismo ancho mínimo (como en el diseño del hero) */
+  .hero__buttons:has(.button + .button) .button {
+    min-width: 10.125rem;
+  }
+
+  /* Banner dentro del contenedor */
+  .hero--contained {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-block: 2.5rem;
+    border-radius: 6px;
+  }
+
+  .hero--contained .hero__container {
+    width: 100%;
+    padding: 1.75rem 1.5rem;
+  }
+
+  .hero--buttons-normal-case .button {
+    text-transform: none;
+  }
+
+  .hero--text-xsmall .hero__heading {
+    font-size: 1.25rem;
+  }
+
+  .hero--text-xsmall .hero__text {
+    font-size: 0.9375rem;
+  }
+
+  /* Móvil, hero grande a todo el ancho (home, About): diseño del usuario a 347 px. Estrellas de 11 px,
+     título de 26 px (interlineado 32,5), texto fino de 20 px (24,5), ambos de 313 px de ancho como máximo,
+     botones apilados a todo el ancho
+     de 42 px con texto de 16 px y 9 px entre ellos, 43 px hasta el borde inferior */
+  @media (max-width: 749px) {
+    .hero--text-large:not(.hero--contained) .hero__container {
+      padding-block-end: 2.6875rem;
+    }
+
+    .hero--text-large:not(.hero--contained) .hero__rating {
+      gap: 0.5rem;
+      margin-block-end: 0.6875rem;
+      font-size: 0.875rem;
+    }
+
+    .hero--text-large:not(.hero--contained) .rating-stars {
+      --star-step: 1.05rem;
+    }
+
+    /* Título y texto con el ancho del diseño (313 px) para que corten las líneas igual */
+    .hero--text-large:not(.hero--contained) .hero__heading {
+      max-width: 19.5625rem;
+      font-size: 1.625rem;
+      line-height: 2.03125rem;
+    }
+
+    .hero--text-large:not(.hero--contained) .hero__text {
+      max-width: 19.5625rem;
+      margin-block-start: 0.4375rem;
+      font-size: 1.25rem;
+      line-height: 1.53125rem;
+    }
+
+    /* Sin "text-wrap: pretty" (global): corta las líneas como el diseño */
+    .hero--text-large:not(.hero--contained) .hero__text p {
+      text-wrap: wrap;
+    }
+
+    .hero--text-large:not(.hero--contained) .hero__buttons {
+      flex-direction: column;
+      gap: 0.5625rem;
+      margin-block-start: 2.1875rem;
+    }
+
+    .hero--text-large:not(.hero--contained) .hero__buttons .button {
+      font-size: 1.0625rem;
+    }
+  }
+
+  /* Móvil, banner "contained" con "Full width on mobile" (p. ej. quesos): a todo el ancho, sin esquinas,
+     título de 33 px (interlineado 41), texto fino de 20 px (26), botón de 147×50 con texto de 17 px y
+     65 px hasta abajo (diseño del usuario a 338 px) */
+  @media (max-width: 749px) {
+    .hero--mobile-full {
+      width: 100%;
+      margin-block: 0;
+      border-radius: 0;
+    }
+
+    .hero--mobile-full .hero__container {
+      width: calc(100% - var(--page-margin) * 2);
+      padding: 2.5rem 0 4.0625rem;
+    }
+
+    .hero--mobile-full.hero--text-large .hero__heading {
+      font-size: 2.0625rem;
+      line-height: 2.5625rem;
+    }
+
+    .hero--mobile-full.hero--text-large .hero__text {
+      margin-block-start: 0.25rem;
+      font-size: 1.25rem;
+      line-height: 1.625rem;
+    }
+
+    .hero--mobile-full .hero__text p {
+      text-wrap: wrap;
+    }
+
+    .hero--mobile-full .hero__buttons {
+      margin-block-start: 1.5rem;
+    }
+
+    .hero--mobile-full .hero__buttons .button {
+      flex: 0 0 auto;
+      min-height: 3.125rem;
+      padding-inline: 1rem;
+      font-size: 1.0625rem;
+    }
+
+    /* Banner del pack en tarjeta (p. ej. carrito): texto arriba, título de 26 px, botón de 52 px */
+    .hero--contained.hero--text-xsmall:not(.hero--mobile-full) .hero__container {
+      justify-content: flex-start;
+      padding: 1.875rem 1.375rem 1.75rem;
+    }
+
+    .hero--contained.hero--text-xsmall:not(.hero--mobile-full) .hero__heading {
+      font-size: 1.625rem;
+      line-height: 2rem;
+    }
+
+    .hero--contained.hero--text-xsmall:not(.hero--mobile-full) .hero__text {
+      max-width: 19rem;
+      font-size: 1.0625rem;
+    }
+
+    .hero--contained.hero--text-xsmall:not(.hero--mobile-full) .hero__buttons .button {
+      flex: 0 0 auto;
+      min-height: 3.25rem;
+      padding-inline: 1.25rem;
+      font-size: 1.0625rem;
+    }
+
+    /* Banner del pack (texto muy pequeño en desktop): texto arriba, título de 29 px, botón de 56 px */
+    .hero--mobile-full.hero--text-xsmall .hero__container {
+      justify-content: flex-start;
+      padding: 2.25rem 0 2rem;
+    }
+
+    .hero--mobile-full.hero--text-xsmall .hero__heading {
+      font-size: 1.8125rem;
+      line-height: 2.25rem;
+    }
+
+    .hero--mobile-full.hero--text-xsmall .hero__text {
+      max-width: 19rem;
+      font-size: 1.0625rem;
+    }
+
+    .hero--mobile-full.hero--text-xsmall .hero__buttons .button {
+      min-height: 3.5rem;
+      padding-inline: 1.25rem;
+    }
+  }
+
+  /* Móvil, banner "contained" con texto pequeño (p. ej. "Discover your next favorite cheese" de la tienda):
+     texto arriba, título de 42 px, texto fino de 18 px y botón de 152×55 (diseño del usuario a 375 px) */
+  @media (max-width: 749px) {
+    .hero--contained.hero--text-small .hero__container {
+      justify-content: flex-start;
+      padding: 1.625rem 1.25rem 2rem;
+    }
+
+    .hero--contained.hero--text-small .hero__heading {
+      font-size: 2.625rem;
+      line-height: 3.21875rem;
+    }
+
+    .hero--contained.hero--text-small .hero__text {
+      margin-block-start: 0.5rem;
+      font-size: 1.125rem;
+      line-height: 1.3;
+    }
+
+    .hero--contained.hero--text-small .hero__text p {
+      text-wrap: wrap;
+    }
+
+    .hero--contained.hero--text-small .hero__buttons {
+      margin-block-start: 1.75rem;
+    }
+
+    .hero--contained.hero--text-small .hero__buttons .button {
+      flex: 0 0 auto;
+      min-height: 3.4375rem;
+      padding-inline: 2rem;
+      font-size: 1rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .hero {
+      min-height: var(--hero-height);
+    }
+
+    .hero__image {
+      object-position: var(--hero-focal);
+    }
+
+    /* Desktop: degradado de izquierda (casi negro) a derecha */
+    .hero::after {
+      background: linear-gradient(
+        90deg,
+        rgb(0 0 0 / calc(var(--hero-overlay) * 1)) 0%,
+        rgb(0 0 0 / calc(var(--hero-overlay) * 0.7)) 25%,
+        rgb(0 0 0 / calc(var(--hero-overlay) * 0.35)) 55%,
+        rgb(0 0 0 / calc(var(--hero-overlay) * 0.1)) 100%
+      );
+    }
+
+    .hero__container {
+      padding-block: 3.625rem;
+    }
+
+    .hero--top .hero__container {
+      justify-content: flex-start;
+    }
+
+    .hero--center .hero__container {
+      justify-content: center;
+    }
+
+    .hero__content {
+      max-width: 33rem;
+    }
+
+    .hero__heading {
+      font-size: 2.0625rem;
+    }
+
+    .hero__text {
+      max-width: 31.25rem;
+      margin-block-start: 0.5rem;
+      font-size: 1.25rem;
+    }
+
+    .hero__buttons {
+      gap: 0.9375rem;
+      margin-block-start: 2.25rem;
+    }
+
+    .hero__buttons .button {
+      flex: 0 0 auto;
+    }
+
+    .hero--contained {
+      margin-block: 3rem;
+    }
+
+    .hero--contained .hero__container {
+      padding: 2.5rem;
+    }
+
+    .hero--contained .hero__buttons {
+      margin-block-start: 1.5rem;
+    }
+
+    /* Texto pequeño (p. ej. banners bajos de la página de tienda) */
+    .hero--text-small .hero__text {
+      font-size: 0.9375rem;
+    }
+
+    /* Texto extra pequeño (p. ej. "Your perfect pack, your way" en la ficha de producto) */
+    .hero--text-xsmall .hero__heading {
+      font-size: 1.4375rem;
+    }
+
+    .hero--text-xsmall .hero__text {
+      margin-block-start: 0.3125rem;
+    }
+
+    .hero--contained.hero--text-xsmall .hero__buttons {
+      margin-block-start: 1.375rem;
+    }
+
+    .hero--text-xsmall .hero__buttons .button {
+      padding-inline: 0.625rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.hero",
+  "tag": "section",
+  "class": "hero-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:labels.image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:labels.image",
+      "info": "t:info.hero_image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "t:labels.image_mobile",
+      "info": "t:info.image_mobile"
+    },
+    {
+      "type": "select",
+      "id": "default_image",
+      "label": "t:labels.default_image",
+      "info": "t:info.default_image",
+      "options": [
+        { "value": "hero", "label": "t:options.default_image.hero" },
+        { "value": "pack", "label": "t:options.default_image.pack" },
+        { "value": "cheese", "label": "t:options.default_image.cheese" },
+        { "value": "none", "label": "t:options.default_image.none" }
+      ],
+      "default": "hero"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#1A1A1A"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:labels.overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 95
+    },
+    {
+      "type": "header",
+      "content": "t:general.layout"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:labels.hero_layout",
+      "options": [
+        { "value": "full", "label": "t:options.hero_layout.full" },
+        { "value": "contained", "label": "t:options.hero_layout.contained" }
+      ],
+      "default": "full"
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_full_width",
+      "label": "t:labels.hero_mobile_full_width",
+      "info": "t:info.hero_mobile_full_width",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "height",
+      "label": "t:labels.height_desktop",
+      "min": 150,
+      "max": 650,
+      "step": 5,
+      "unit": "px",
+      "default": 510
+    },
+    {
+      "type": "range",
+      "id": "height_mobile",
+      "label": "t:labels.height_mobile",
+      "min": 200,
+      "max": 900,
+      "step": 10,
+      "unit": "px",
+      "default": 580
+    },
+    {
+      "type": "select",
+      "id": "content_position",
+      "label": "t:labels.content_position",
+      "info": "t:info.content_position",
+      "options": [
+        { "value": "top", "label": "t:options.vertical_position.top" },
+        { "value": "center", "label": "t:options.vertical_position.center" },
+        { "value": "bottom", "label": "t:options.vertical_position.bottom" }
+      ],
+      "default": "bottom"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:labels.text_color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "t:general.rating"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "label": "t:labels.show_rating",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "rating",
+      "label": "t:labels.rating",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "default": 5
+    },
+    {
+      "type": "text",
+      "id": "rating_text",
+      "label": "t:labels.rating_text",
+      "default": "208 reviews"
+    },
+    {
+      "type": "url",
+      "id": "rating_link",
+      "label": "t:labels.rating_link"
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "t:labels.star_color",
+      "default": "#BE1621"
+    },
+    {
+      "type": "header",
+      "content": "t:general.content"
+    },
+    {
+      "type": "textarea",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "info": "t:info.heading_line_break",
+      "default": "A taste of Spain,\nstraight to your table"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "t:labels.heading_tag",
+      "info": "t:info.heading_tag",
+      "options": [
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" }
+      ],
+      "default": "h1"
+    },
+    {
+      "type": "checkbox",
+      "id": "uppercase_heading",
+      "label": "t:labels.uppercase_heading",
+      "default": true
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:labels.text",
+      "default": "<p>Discover authentic Spanish flavors for every moment and special occasions.</p>"
+    },
+    {
+      "type": "select",
+      "id": "text_size",
+      "label": "t:labels.text_size",
+      "options": [
+        { "value": "large", "label": "t:options.size.large" },
+        { "value": "small", "label": "t:options.size.small" },
+        { "value": "xsmall", "label": "t:options.size.xsmall" }
+      ],
+      "default": "large"
+    },
+    {
+      "type": "header",
+      "content": "t:general.buttons"
+    },
+    {
+      "type": "checkbox",
+      "id": "uppercase_buttons",
+      "label": "t:labels.uppercase_buttons",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "button_label_1",
+      "label": "t:labels.button_label_1",
+      "default": "Shop best sellers"
+    },
+    {
+      "type": "url",
+      "id": "button_link_1",
+      "label": "t:labels.button_link_1"
+    },
+    {
+      "type": "text",
+      "id": "button_label_2",
+      "label": "t:labels.button_label_2",
+      "default": "Build your pack"
+    },
+    {
+      "type": "url",
+      "id": "button_link_2",
+      "label": "t:labels.button_link_2"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.hero"
+    }
+  ]
+}
+{% endschema %}

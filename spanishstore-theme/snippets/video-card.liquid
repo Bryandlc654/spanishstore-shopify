@@ -1,0 +1,230 @@
+{% doc %}
+  Tarjeta de vídeo con portada y botón de play (galería de vídeos, testimonios…).
+  Al pulsar play inserta el reproductor desde un <template> (no se carga nada hasta el clic),
+  lo reproduce dentro de la tarjeta y pausa cualquier otro vídeo de la página.
+  Sin portada usa la imagen de vista previa del vídeo, después la portada por defecto (cover_url)
+  y, si tampoco hay, un placeholder.
+  Sin vídeo no hay nada que reproducir: con portada por defecto se ve el icono de play (decorativo,
+  como en el diseño) y en el editor de temas el botón.
+
+  @param {video} [video] - Vídeo subido a Shopify (ajuste de tipo video)
+  @param {object} [video_url] - Enlace de YouTube o Vimeo (ajuste de tipo video_url)
+  @param {image} [cover] - Imagen de portada
+  @param {string} [cover_url] - URL de una portada por defecto (p. ej. un asset del tema)
+  @param {number} [cover_width] - Ancho de esa portada (por defecto 700)
+  @param {number} [cover_height] - Alto de esa portada (por defecto 1244)
+  @param {string} [label] - Texto accesible del vídeo (p. ej. su título)
+  @param {string} [sizes] - Atributo sizes de la portada
+  @param {number} [placeholder_index] - Índice para alternar placeholders
+  @param {string} [ratio] - Proporción CSS de la tarjeta, p. ej. '7 / 10' (por defecto) o '1'
+
+  @example
+  {% render 'video-card', video: block.settings.video, video_url: block.settings.video_url, cover: block.settings.cover, label: block.settings.title %}
+{% enddoc %}
+
+{%- assign cover_max = cover_width | default: 700 -%}
+{%- liquid
+  assign cover = cover | default: video.preview_image
+  assign sizes = sizes | default: '(min-width: 990px) 280px, (min-width: 750px) 30vw, 45vw'
+  assign ratio = ratio | default: '7 / 10'
+
+  assign has_video = false
+  if video != blank or video_url != blank
+    assign has_video = true
+  endif
+-%}
+
+<video-card class="video-card" style="--video-card-ratio: {{ ratio }};">
+  {%- if cover != blank -%}
+    {{
+      cover
+      | image_url: width: 900
+      | image_tag: class: 'video-card__cover', alt: cover.alt, loading: 'lazy', widths: '300, 450, 600, 900', sizes: sizes
+    }}
+  {%- elsif cover_url != blank -%}
+    <img
+      class="video-card__cover"
+      src="{{ cover_url }}"
+      srcset="{%- render 'asset-srcset', url: cover_url, max: cover_max -%}"
+      sizes="{{ sizes }}"
+      alt=""
+      width="{{ cover_width | default: 700 }}"
+      height="{{ cover_height | default: 1244 }}"
+      loading="lazy"
+    >
+  {%- else -%}
+    {%- assign placeholder = placeholder_index | default: 0 | modulo: 2 | plus: 1 | prepend: 'lifestyle-' -%}
+    {{ placeholder | placeholder_svg_tag: 'video-card__cover video-card__cover--placeholder' }}
+  {%- endif -%}
+
+  {%- if has_video or request.design_mode -%}
+    <button
+      type="button"
+      class="video-card__play"
+      aria-label="{{ 'sections.video.play_named' | t: title: label }}"
+      data-video-play
+    >
+      {{- 'icon-play.svg' | inline_asset_content -}}
+    </button>
+  {%- elsif cover_url != blank -%}
+    <span class="video-card__play" aria-hidden="true">{{- 'icon-play.svg' | inline_asset_content -}}</span>
+  {%- endif -%}
+
+  {%- if has_video -%}
+    <template data-video-template>
+      {%- if video != blank -%}
+        {{
+          video
+          | video_tag:
+            class: 'video-card__player',
+            image_size: '900x',
+            controls: true,
+            playsinline: true,
+            preload: 'metadata'
+        }}
+      {%- elsif video_url.type == 'youtube' -%}
+        <iframe
+          class="video-card__player"
+          src="https://www.youtube.com/embed/{{ video_url.id }}?autoplay=1&playsinline=1&rel=0"
+          title="{{ label | escape }}"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowfullscreen
+        ></iframe>
+      {%- elsif video_url.type == 'vimeo' -%}
+        <iframe
+          class="video-card__player"
+          src="https://player.vimeo.com/video/{{ video_url.id }}?autoplay=1&playsinline=1"
+          title="{{ label | escape }}"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowfullscreen
+        ></iframe>
+      {%- endif -%}
+    </template>
+  {%- endif -%}
+</video-card>
+
+{% stylesheet %}
+  .video-card {
+    position: relative;
+    display: block;
+    aspect-ratio: var(--video-card-ratio, 7 / 10);
+    overflow: hidden;
+    border-radius: 5px;
+    background-color: #1a1a1a;
+  }
+
+  .video-card__cover,
+  .video-card__player {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    border: 0;
+    object-fit: cover;
+  }
+
+  /* "Spanish flavors, real moments.": la portada se acerca (zoom in) al pasar el ratón o con el foco */
+  .video-gallery .video-card__cover {
+    transition: scale 0.6s ease;
+  }
+
+  .video-gallery .video-card:hover .video-card__cover,
+  .video-gallery .video-card:focus-within .video-card__cover {
+    scale: 1.08;
+  }
+
+  .video-card__cover--placeholder {
+    fill: #9a9a9a;
+    background-color: #e6e6e6;
+  }
+
+  .video-card__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0 0 0.125rem;
+    border: 0;
+    border-radius: 50%;
+    background-color: #fff;
+    color: #000;
+    cursor: pointer;
+    translate: -50% -50%;
+    transition: scale 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  /* Sin vídeo el icono es solo decorativo */
+  span.video-card__play {
+    cursor: default;
+  }
+
+  .video-card__play svg {
+    width: 0.8125rem;
+    height: 0.9375rem;
+  }
+
+  .video-card:hover .video-card__play {
+    scale: 1.1;
+    box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.25);
+  }
+
+  .video-card__play:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+  }
+
+  /* Al reproducir se ocultan la portada y el botón */
+  .video-card.is-playing .video-card__cover,
+  .video-card.is-playing .video-card__play {
+    display: none;
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class VideoCard extends HTMLElement {
+    connectedCallback() {
+      this.button = this.querySelector('[data-video-play]');
+      this.template = this.querySelector('[data-video-template]');
+      if (!this.button || !this.template) return;
+      this.button.addEventListener('click', () => this.play());
+    }
+
+    play() {
+      // Pausa cualquier otro vídeo de la página que esté sonando
+      document.querySelectorAll('video-card.is-playing').forEach((card) => card !== this && card.pause());
+
+      if (!this.player) {
+        this.append(this.template.content.cloneNode(true));
+        this.player = this.querySelector('.video-card__player');
+      }
+      this.classList.add('is-playing');
+
+      if (this.player instanceof HTMLVideoElement) {
+        this.player.play().catch(() => {});
+        this.player.focus();
+      }
+    }
+
+    // Pausa el vídeo. Los iframes (YouTube/Vimeo) se quitan para que dejen de sonar
+    // y la tarjeta vuelve a mostrar la portada.
+    pause() {
+      if (this.player instanceof HTMLVideoElement) {
+        this.player.pause();
+      } else if (this.player) {
+        this.player.remove();
+        this.player = null;
+        this.classList.remove('is-playing');
+      }
+    }
+  }
+
+  if (!customElements.get('video-card')) {
+    customElements.define('video-card', VideoCard);
+  }
+{% endjavascript %}

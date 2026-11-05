@@ -1,0 +1,185 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "about_hero": {
+      "type": "hero",
+      "settings": {
+        "default_image": "hero",
+        "background": "#1A1A1A",
+        "overlay_opacity": 75,
+        "layout": "full",
+        "height": 420,
+        "height_mobile": 420,
+        "content_position": "center",
+        "text_color": "#FFFFFF",
+        "show_rating": false,
+        "heading": "About us",
+        "heading_tag": "h1",
+        "uppercase_heading": true,
+        "text": "<p>Authentic Spanish food, chosen with care and delivered to your door in Canada.</p>",
+        "text_size": "large",
+        "uppercase_buttons": true,
+        "button_label_1": "Shop all",
+        "button_link_1": "shopify://collections/all",
+        "button_label_2": "",
+        "button_link_2": ""
+      }
+    },
+    "story": {
+      "type": "content-with-image",
+      "blocks": {
+        "stat_founded": {
+          "type": "stat",
+          "settings": {
+            "value": "2026",
+            "label": "Founded"
+          }
+        },
+        "stat_producers": {
+          "type": "stat",
+          "settings": {
+            "value": "40+",
+            "label": "Spanish producers"
+          }
+        },
+        "stat_spain": {
+          "type": "stat",
+          "settings": {
+            "value": "100%",
+            "label": "Made in Spain"
+          }
+        }
+      },
+      "block_order": [
+        "stat_founded",
+        "stat_producers",
+        "stat_spain"
+      ],
+      "settings": {
+        "default_image": "table",
+        "image_position": "left",
+        "eyebrow": "Our story",
+        "heading": "Bringing the taste of Spain to your table",
+        "text": "<p>The Spanish Store was born from a simple idea: the flavours we grew up with in Spain should be just a click away, wherever you live.</p><p>We are a small team of Spanish food lovers in Canada. We missed a proper slice of jamón, a well-cured Manchego and a good tin of sardines, so we started bringing them over ourselves — and sharing them.</p><p>Today we work directly with family producers across Spain to offer a pantry that tastes like home: cured meats, cheeses, conservas, olive oil, rice for paella, snacks and sweets.</p>",
+        "button_label": "",
+        "button_link": "",
+        "background": "#FFFFFF",
+        "show_pattern": false
+      }
+    },
+    "selection": {
+      "type": "features-bar",
+      "blocks": {
+        "f_tasted": {
+          "type": "feature",
+          "settings": {
+            "icon": "award",
+            "title": "Tasted and approved",
+            "text": "<p>We taste every product before it joins our pantry.</p>"
+          }
+        },
+        "f_producers": {
+          "type": "feature",
+          "settings": {
+            "icon": "leaf",
+            "title": "Small producers",
+            "text": "<p>Family businesses that work with tradition and care.</p>"
+          }
+        },
+        "f_origin": {
+          "type": "feature",
+          "settings": {
+            "icon": "globe",
+            "title": "Authentic origin",
+            "text": "<p>Products with protected designations from Spain.</p>"
+          }
+        },
+        "f_chilled": {
+          "type": "feature",
+          "settings": {
+            "icon": "snowflake",
+            "title": "Carefully chilled",
+            "text": "<p>Thermal packaging for cheese and charcuterie.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "f_tasted",
+        "f_producers",
+        "f_origin",
+        "f_chilled"
+      ],
+      "settings": {
+        "heading": "How we choose our products",
+        "subheading": "Every product in our store meets four simple rules.",
+        "background": "#FAF8F1",
+        "icon_color": "#BE1621",
+        "show_pattern": true,
+        "width": "wide"
+      }
+    },
+    "origin": {
+      "type": "content-with-image",
+      "blocks": {
+        "stat_regions": {
+          "type": "stat",
+          "settings": {
+            "value": "12",
+            "label": "Spanish regions"
+          }
+        },
+        "stat_dop": {
+          "type": "stat",
+          "settings": {
+            "value": "DOP",
+            "label": "Protected origin"
+          }
+        }
+      },
+      "block_order": [
+        "stat_regions",
+        "stat_dop"
+      ],
+      "settings": {
+        "default_image": "pantry",
+        "image_position": "right",
+        "eyebrow": "Origin",
+        "heading": "From the regions of Spain to your door",
+        "text": "<p>Each product comes from the place that made it famous:</p><ul><li><strong>La Mancha</strong> – Manchego cheese</li><li><strong>Jabugo and Guijuelo</strong> – Ibérico ham</li><li><strong>Galicia</strong> – conservas and seafood</li><li><strong>Valencia</strong> – bomba rice for paella</li><li><strong>Andalusia</strong> – extra virgin olive oil and sherry</li></ul>",
+        "button_label": "Discover the collection",
+        "button_link": "shopify://collections/all",
+        "background": "#FFFFFF",
+        "show_pattern": false
+      }
+    },
+    "about_cta": {
+      "type": "text-banner",
+      "settings": {
+        "heading": "Taste Spain at home",
+        "uppercase_heading": true,
+        "text": "<p>Build your own pack of Spanish favourites and save up to 20%.</p>",
+        "button_label": "Shop now",
+        "button_link": "shopify://collections/all",
+        "height": 200,
+        "background": "#BE1621",
+        "text_color": "#FFFFFF",
+        "show_pattern": true
+      }
+    }
+  },
+  "order": [
+    "about_hero",
+    "story",
+    "selection",
+    "origin",
+    "about_cta"
+  ]
+}

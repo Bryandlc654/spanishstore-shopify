@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    {% # Inlined CSS Variables %}
+    {% render 'css-variables' %}
+
+    {% # Precarga de las fuentes que se ven en la primera pantalla (normal, negrita y fina) %}
+    {{- settings.type_primary_font | font_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+    {{- settings.type_primary_font | font_modify: 'weight', 'bold' | font_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+    {%- assign font_light_preload = settings.type_primary_font | font_modify: 'weight', '300' -%}
+    {%- if font_light_preload -%}
+      {{- font_light_preload | font_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+    {%- endif %}
+
+    {% # Load and preload the critical CSS %}
+    {{ 'critical.css' | asset_url | stylesheet_tag: preload: true }}
+
+    {% # Social, title, etc. %}
+    {% render 'meta-tags' %}
+
+    {{ content_for_header }}
+
+    {% # Carrito: página del carrito, carrito lateral y "Add to cart" por AJAX %}
+    <script src="{{ 'cart.js' | asset_url }}" defer="defer"></script>
+    {%- if settings.animations_reveal -%}
+      <script>
+        document.documentElement.classList.add('js-reveal');
+        // Si animations.js no llega a cargar, se muestra todo
+        window.addEventListener('load', () => {
+          if (!window.themeReveal) document.documentElement.classList.remove('js-reveal');
+        });
+      </script>
+      <script src="{{ 'animations.js' | asset_url }}" defer="defer"></script>
+    {%- endif -%}
+  </head>
+
+  <body>
+    {% # Accesibilidad: saltar al contenido con el teclado %}
+    <a class="skip-link" href="#MainContent">{{ 'accessibility.skip_to_content' | t }}</a>
+
+    {% sections 'header-group' %}
+
+    <main id="MainContent" class="main-content" role="main" tabindex="-1">
+      {{ content_for_layout }}
+    </main>
+
+    {% sections 'footer-group' %}
+
+    {%- unless template.name == 'cart' -%}
+      {% section 'cart-drawer' %}
+    {%- endunless -%}
+
+    {% section 'newsletter-popup' %}
+  </body>
+</html>

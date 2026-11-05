@@ -1,0 +1,310 @@
+{% comment %}
+  Carrusel de productos de una colección (p. ej. "Best sellers").
+  - Cabecera: título a la izquierda y enlace "View all" a la derecha.
+  - El carrusel (scroll, flechas, columnas) es el compartido de snippets/carousel-arrows.liquid.
+  - Desktop: 4 tarjetas visibles (configurable). Móvil/tablet: scroll táctil.
+  Sin colección elegida usa "todos los productos". Si la tienda no tiene productos,
+  muestra tarjetas de ejemplo.
+  Fuente "related" / "complementary" (en la ficha de producto, p. ej. "You may also like", y en el
+  carrito, a partir de su primer producto):
+  los productos los calcula Shopify (Search & Discovery). Mientras tanto (y si Shopify no devuelve
+  ninguno) se muestran productos de la colección, sin el producto de la ficha ni los del carrito;
+  <product-recommendations> pide las recomendaciones con la Section Rendering API y, si hay, sustituye
+  las tarjetas.
+{% endcomment %}
+
+{%- liquid
+  assign source = section.settings.collection | default: collections.all
+  assign items = source.products
+  assign limit = section.settings.products_to_show
+
+  assign rec_product = product
+  if rec_product == blank and template.name == 'cart' and cart.item_count > 0
+    assign rec_product = cart.items.first.product
+  endif
+
+  # En la respuesta de /recommendations/products no hay "product": basta con recommendations.performed?
+  assign use_recommendations = false
+  if section.settings.source != 'collection'
+    if rec_product != blank or recommendations.performed?
+      assign use_recommendations = true
+      assign items = recommendations.products
+    endif
+  endif
+
+  if section.settings.view_all_link != blank
+    assign view_all_url = section.settings.view_all_link
+  elsif section.settings.collection != blank
+    assign view_all_url = section.settings.collection.url
+  elsif use_recommendations and rec_product.collections.size > 0
+    assign view_all_url = rec_product.collections.first.url
+  else
+    assign view_all_url = routes.all_products_collection_url
+  endif
+
+  # Productos que no se repiten: el de la ficha y los del carrito (en la página del carrito)
+  assign exclude_ids = ','
+  if use_recommendations and recommendations.performed? == false
+    if product != blank
+      assign exclude_ids = exclude_ids | append: product.id | append: ','
+    endif
+    if template.name == 'cart'
+      for line in cart.items
+        assign exclude_ids = exclude_ids | append: line.product_id | append: ','
+      endfor
+    endif
+  endif
+
+  # Recomendaciones (respuesta de Shopify) o, en la carga inicial, productos de la colección
+  assign has_products = false
+  if use_recommendations and recommendations.performed?
+    if recommendations.products_count > 0
+      assign has_products = true
+    endif
+  elsif use_recommendations
+    assign items = source.products
+    for item in items
+      assign item_key = ',' | append: item.id | append: ','
+      unless exclude_ids contains item_key
+        assign has_products = true
+        break
+      endunless
+    endfor
+  elsif source.products_count > 0
+    assign has_products = true
+  endif
+-%}
+
+{%- capture carousel -%}
+<div class="product-carousel full-width">
+  <div class="section-header">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="section-header__heading">{{ section.settings.heading | escape }}</h2>
+    {%- endif -%}
+    {%- if section.settings.view_all_label != blank -%}
+      <a href="{{ view_all_url }}" class="section-header__link">{{ section.settings.view_all_label | escape }}</a>
+    {%- endif -%}
+  </div>
+
+  <carousel-slider class="carousel" style="--carousel-columns: {{ section.settings.columns }};">
+    <ul class="carousel__track" role="list" data-carousel-track>
+      {%- if has_products -%}
+        {%- assign rendered = 0 -%}
+        {%- for item in items -%}
+          {%- assign item_key = ',' | append: item.id | append: ',' -%}
+          {%- if exclude_ids contains item_key -%}{%- continue -%}{%- endif -%}
+          <li class="carousel__slide">
+            {%- render 'product-card',
+              product: item,
+              badge_source: section.settings.badge_source,
+              tax_note: section.settings.tax_note,
+              show_rating: section.settings.show_rating
+            -%}
+          </li>
+          {%- assign rendered = rendered | plus: 1 -%}
+          {%- if rendered >= limit -%}{%- break -%}{%- endif -%}
+        {%- endfor -%}
+      {%- else -%}
+        {%- for i in (1..limit) -%}
+          <li class="carousel__slide">
+            {%- render 'product-card',
+              placeholder_index: forloop.index0,
+              badge_source: section.settings.badge_source,
+              tax_note: section.settings.tax_note,
+              show_rating: section.settings.show_rating
+            -%}
+          </li>
+        {%- endfor -%}
+      {%- endif -%}
+    </ul>
+
+    {%- if section.settings.show_arrows -%}
+      {%- render 'carousel-arrows' -%}
+    {%- endif -%}
+  </carousel-slider>
+</div>
+{%- endcapture -%}
+
+{%- if use_recommendations -%}
+  <product-recommendations
+    class="product-recommendations full-width"
+    data-url="{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ rec_product.id }}&limit={{ limit }}&intent={{ section.settings.source }}"
+    data-view-all-url="{{ view_all_url }}"
+    {% if recommendations.performed? %}
+      data-performed
+    {% endif %}
+  >
+    {%- if has_products -%}
+      {{ carousel }}
+    {%- endif -%}
+  </product-recommendations>
+{%- else -%}
+  {{ carousel }}
+{%- endif -%}
+
+{% stylesheet %}
+  .product-carousel {
+    padding-block: 2.5rem;
+  }
+
+  @media (min-width: 750px) {
+    .product-carousel {
+      padding-block: 3rem;
+    }
+  }
+
+  .product-recommendations {
+    display: block;
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class ProductRecommendations extends HTMLElement {
+    connectedCallback() {
+      // Ya son recomendaciones (respuesta de Shopify) o no hay URL: no hay nada que pedir
+      if (this.hasAttribute('data-performed') || !this.dataset.url) return;
+      // Se piden al acercarse a la sección para no retrasar la carga de la ficha
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          this.observer.disconnect();
+          this.load();
+        },
+        { rootMargin: '0px 0px 400px 0px' }
+      );
+      this.observer.observe(this);
+    }
+
+    disconnectedCallback() {
+      this.observer?.disconnect();
+    }
+
+    async load() {
+      try {
+        const response = await fetch(this.dataset.url);
+        if (!response.ok) return;
+        const html = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const fresh = html.querySelector('product-recommendations');
+        if (fresh?.children.length) {
+          this.innerHTML = fresh.innerHTML;
+          // La respuesta no conoce el producto de la página: se conserva el enlace "View all" calculado aquí
+          const viewAll = this.querySelector('.section-header__link');
+          if (viewAll && this.dataset.viewAllUrl) viewAll.href = this.dataset.viewAllUrl;
+        }
+      } catch (error) {
+        // Sin recomendaciones la sección queda vacía (no ocupa espacio)
+      }
+    }
+  }
+
+  if (!customElements.get('product-recommendations')) {
+    customElements.define('product-recommendations', ProductRecommendations);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:general.product_carousel",
+  "tag": "section",
+  "class": "product-carousel-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Best sellers"
+    },
+    {
+      "type": "text",
+      "id": "view_all_label",
+      "label": "t:labels.view_all_label",
+      "default": "View all"
+    },
+    {
+      "type": "url",
+      "id": "view_all_link",
+      "label": "t:labels.view_all_link",
+      "info": "t:info.view_all_link"
+    },
+    {
+      "type": "header",
+      "content": "t:general.products"
+    },
+    {
+      "type": "select",
+      "id": "source",
+      "label": "t:labels.product_source",
+      "info": "t:info.product_source",
+      "options": [
+        { "value": "collection", "label": "t:options.product_source.collection" },
+        { "value": "related", "label": "t:options.product_source.related" },
+        { "value": "complementary", "label": "t:options.product_source.complementary" }
+      ],
+      "default": "collection"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:labels.collection",
+      "info": "t:info.carousel_collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "label": "t:labels.products_to_show",
+      "min": 4,
+      "max": 16,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "t:labels.columns_desktop",
+      "min": 3,
+      "max": 5,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "checkbox",
+      "id": "show_arrows",
+      "label": "t:labels.show_arrows",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:general.product_card"
+    },
+    {
+      "type": "select",
+      "id": "badge_source",
+      "label": "t:labels.badge_source",
+      "options": [
+        { "value": "type", "label": "t:options.badge_source.type" },
+        { "value": "vendor", "label": "t:options.badge_source.vendor" },
+        { "value": "none", "label": "t:options.badge_source.none" }
+      ],
+      "default": "type"
+    },
+    {
+      "type": "text",
+      "id": "tax_note",
+      "label": "t:labels.tax_note",
+      "default": "VAT included. Free shipping."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "label": "t:labels.show_rating",
+      "info": "t:info.product_rating",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.product_carousel"
+    }
+  ]
+}
+{% endschema %}

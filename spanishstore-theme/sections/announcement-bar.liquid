@@ -1,0 +1,254 @@
+{% comment %}
+  Barra superior de anuncios (topbar).
+  Los mensajes se muestran de uno en uno, como slides que cambian solos cada "interval" segundos
+  con una transición vertical (el actual sale hacia arriba y el siguiente entra desde abajo).
+  - Todos los slides ocupan la misma celda de la rejilla: la barra mide lo que el mensaje más alto
+    (en móvil un mensaje largo puede ocupar dos líneas) y no salta al cambiar.
+  - Se pausa al pasar el ratón, al enfocar un enlace y con la pestaña en segundo plano.
+  - Los slides ocultos llevan aria-hidden e inert (sus enlaces no reciben el foco).
+  - Con "reducir movimiento" el cambio es un fundido, sin desplazamiento.
+  - Sin JavaScript se ve solo el primer mensaje.
+{% endcomment %}
+
+{%- if section.blocks.size > 0 -%}
+  <announcement-slider
+    class="announcement-bar full-width"
+    style="--announcement-bg: {{ section.settings.background }}; --announcement-fg: {{ section.settings.foreground }};"
+    data-interval="{{ section.settings.interval | default: 4 }}"
+    role="region"
+    aria-roledescription="carousel"
+    aria-label="{{ 'header.announcements' | t }}"
+  >
+    <ul class="announcement-bar__slides" role="list">
+      {%- for block in section.blocks -%}
+        <li
+          class="announcement-bar__slide{% if forloop.first %} is-active{% endif %}"
+          {% unless forloop.first %}
+            aria-hidden="true"
+            inert
+          {% endunless %}
+          {{ block.shopify_attributes }}
+        >
+          {%- if block.settings.link != blank -%}
+            <a href="{{ block.settings.link }}">{{- block.settings.text -}}</a>
+          {%- else -%}
+            <span>{{- block.settings.text -}}</span>
+          {%- endif -%}
+        </li>
+      {%- endfor -%}
+    </ul>
+  </announcement-slider>
+{%- endif -%}
+
+<script>
+  if (!customElements.get('announcement-slider')) {
+    customElements.define(
+      'announcement-slider',
+      class extends HTMLElement {
+        connectedCallback() {
+          this.slides = Array.from(this.querySelectorAll('.announcement-bar__slide'));
+          if (this.slides.length < 2) return;
+          this.index = Math.max(0, this.slides.findIndex((slide) => slide.classList.contains('is-active')));
+          this.delay = Math.max(2, Number(this.dataset.interval) || 4) * 1000;
+          this.paused = new Set();
+
+          const pause = (reason) => {
+            this.paused.add(reason);
+            this.stop();
+          };
+          const resume = (reason) => {
+            this.paused.delete(reason);
+            this.start();
+          };
+
+          this.addEventListener('mouseenter', () => pause('hover'));
+          this.addEventListener('mouseleave', () => resume('hover'));
+          this.addEventListener('focusin', () => pause('focus'));
+          this.addEventListener('focusout', (event) => {
+            if (!this.contains(event.relatedTarget)) resume('focus');
+          });
+          this.onVisibility = () => (document.hidden ? pause('hidden') : resume('hidden'));
+          document.addEventListener('visibilitychange', this.onVisibility);
+
+          // Editor de temas: al seleccionar un anuncio se muestra y se detiene la rotación
+          this.addEventListener('shopify:block:select', (event) => {
+            const index = this.slides.indexOf(event.target);
+            if (index > -1) this.show(index);
+            pause('editor');
+          });
+          this.addEventListener('shopify:block:deselect', () => resume('editor'));
+
+          this.start();
+        }
+
+        disconnectedCallback() {
+          this.stop();
+          if (this.onVisibility) document.removeEventListener('visibilitychange', this.onVisibility);
+        }
+
+        start() {
+          this.stop();
+          if (this.paused.size) return;
+          this.timer = setInterval(() => this.show(this.index + 1), this.delay);
+        }
+
+        stop() {
+          clearInterval(this.timer);
+        }
+
+        show(next) {
+          next = (next + this.slides.length) % this.slides.length;
+          if (next === this.index) return;
+          const current = this.slides[this.index];
+          const incoming = this.slides[next];
+
+          // El que sale sube; el que entra parte de abajo y sube a su sitio
+          current.classList.remove('is-active');
+          current.classList.add('is-leaving');
+          current.setAttribute('aria-hidden', 'true');
+          current.inert = true;
+
+          incoming.classList.remove('is-leaving');
+          incoming.removeAttribute('aria-hidden');
+          incoming.inert = false;
+          void incoming.offsetWidth;
+          incoming.classList.add('is-active');
+
+          clearTimeout(current.leaveTimer);
+          current.leaveTimer = setTimeout(() => current.classList.remove('is-leaving'), 700);
+          this.index = next;
+        }
+      }
+    );
+  }
+</script>
+
+{% stylesheet %}
+  .announcement-bar {
+    display: block;
+    overflow: hidden;
+    background-color: var(--announcement-bg);
+    color: var(--announcement-fg);
+    font-size: 0.9375rem;
+    line-height: 1rem;
+  }
+
+  /* Todos los slides en la misma celda: la altura es la del mensaje más alto */
+  .announcement-bar__slides {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    list-style: none;
+  }
+
+  .announcement-bar__slide {
+    grid-area: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3125rem 1rem;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(100%);
+  }
+
+  .announcement-bar__slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+  }
+
+  /* El que sale: sube y se desvanece (visibility se mantiene hasta que acaba) */
+  .announcement-bar__slide.is-leaving {
+    opacity: 0;
+    visibility: visible;
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(0.7, 0, 0.84, 0), opacity 0.45s ease;
+  }
+
+  .announcement-bar a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .announcement-bar a:hover {
+    text-decoration: underline;
+  }
+
+  /* Accesibilidad: sin desplazamiento, solo fundido */
+  @media (prefers-reduced-motion: reduce) {
+    .announcement-bar__slide,
+    .announcement-bar__slide.is-active,
+    .announcement-bar__slide.is-leaving {
+      transform: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.announcement_bar",
+  "tag": "aside",
+  "class": "announcement-bar-section",
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "foreground",
+      "label": "t:labels.foreground",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "interval",
+      "label": "t:labels.slide_interval",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "unit": "s",
+      "default": 4
+    }
+  ],
+  "blocks": [
+    {
+      "type": "announcement",
+      "name": "t:general.announcement",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "text",
+          "label": "t:labels.text",
+          "default": "Free Shipping on Orders Over $300"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "t:labels.link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.announcement_bar",
+      "blocks": [
+        {
+          "type": "announcement"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,471 @@
+{% comment %}
+  Página de contacto.
+  - Cabecera: migas de pan, título (el de la página) y texto (contenido de la página o el del ajuste).
+  - Formulario de contacto de Shopify (llega al email de la tienda): nombre, email, teléfono,
+    nº de pedido, asunto y mensaje. Muestra el aviso de enviado y los errores.
+  - Tarjeta lateral: email, teléfono, horario, dirección y enlace a las preguntas frecuentes
+    (por defecto, a la página FAQ si existe o, si no, a la sección FAQ de la misma página: #faq).
+  Desktop: formulario a la izquierda y tarjeta a la derecha. Móvil: uno debajo de otro.
+{% endcomment %}
+
+{%- liquid
+  assign heading = section.settings.heading
+  if heading == blank
+    assign heading = page.title
+  endif
+  assign phone_href = section.settings.phone | remove: ' ' | remove: '-' | remove: '(' | remove: ')'
+  assign faq_url = section.settings.faq_link | default: pages.faq.url | default: '#faq'
+-%}
+
+<div class="main-contact full-width">
+  <nav class="breadcrumb main-contact__breadcrumb" aria-label="{{ 'collections.breadcrumb' | t }}">
+    <ol role="list">
+      <li><a href="{{ routes.root_url }}">{{ 'collections.home' | t }}</a></li>
+      <li><span aria-current="page">{{ heading | escape }}</span></li>
+    </ol>
+  </nav>
+
+  <header class="main-contact__header">
+    <h1 class="main-contact__title">{{ heading | escape }}</h1>
+    {%- if page.content != blank -%}
+      <div class="main-contact__intro">{{ page.content }}</div>
+    {%- elsif section.settings.intro != blank -%}
+      <div class="main-contact__intro">{{ section.settings.intro }}</div>
+    {%- endif -%}
+  </header>
+
+  <div class="main-contact__layout">
+    <div class="contact-card contact-form">
+      <h2 class="contact-card__heading">{{ section.settings.form_heading | escape }}</h2>
+
+      {%- form 'contact', id: 'ContactForm', class: 'contact-form__form', novalidate: 'novalidate' -%}
+        {%- if form.posted_successfully? -%}
+          <p class="contact-form__success" role="status" tabindex="-1">
+            {{- 'icon-check-circle.svg' | inline_asset_content -}}
+            <span>{{ 'contact.success' | t }}</span>
+          </p>
+        {%- elsif form.errors -%}
+          <div class="contact-form__errors" role="alert">{{ form.errors | default_errors }}</div>
+        {%- endif -%}
+
+        <div class="contact-form__row">
+          <label class="contact-form__field">
+            <span>{{ 'contact.name' | t }}</span>
+            <input type="text" name="contact[name]" value="{{ form.name }}" autocomplete="name">
+          </label>
+          <label class="contact-form__field">
+            <span>{{ 'contact.email' | t }} <abbr title="{{ 'contact.required' | t }}">*</abbr></span>
+            <input
+              type="email"
+              name="contact[email]"
+              value="{{ form.email }}"
+              autocomplete="email"
+              autocapitalize="off"
+              spellcheck="false"
+              required
+              aria-required="true"
+              {% if form.errors contains 'email' %}
+                aria-invalid="true"
+              {% endif %}
+            >
+          </label>
+        </div>
+
+        <div class="contact-form__row">
+          <label class="contact-form__field">
+            <span>{{ 'contact.phone' | t }}</span>
+            <input type="tel" name="contact[phone]" value="{{ form.phone }}" autocomplete="tel" pattern="[0-9\-\+\s\(\)]*">
+          </label>
+          <label class="contact-form__field">
+            <span>{{ 'contact.order_number' | t }}</span>
+            <input type="text" name="contact[Order number]" value="{{ form['Order number'] }}">
+          </label>
+        </div>
+
+        <label class="contact-form__field">
+          <span>{{ 'contact.subject' | t }}</span>
+          <select name="contact[Subject]">
+            {%- assign subjects = section.settings.subjects | newline_to_br | split: '<br />' -%}
+            {%- for subject in subjects -%}
+              {%- assign subject = subject | strip -%}
+              {%- if subject != blank -%}
+                <option value="{{ subject | escape }}">{{ subject | escape }}</option>
+              {%- endif -%}
+            {%- endfor -%}
+          </select>
+        </label>
+
+        <label class="contact-form__field">
+          <span>{{ 'contact.message' | t }} <abbr title="{{ 'contact.required' | t }}">*</abbr></span>
+          <textarea name="contact[body]" rows="6" required aria-required="true">{{ form.body }}</textarea>
+        </label>
+
+        <button type="submit" class="button button--primary contact-form__submit">{{ 'contact.send' | t }}</button>
+        <p class="contact-form__note">{{ 'contact.reply_time' | t }}</p>
+      {%- endform -%}
+    </div>
+
+    <aside class="contact-card contact-info" aria-label="{{ section.settings.info_heading | escape }}">
+      <h2 class="contact-card__heading">{{ section.settings.info_heading | escape }}</h2>
+
+      <ul class="contact-info__list" role="list">
+        {%- if section.settings.email != blank -%}
+          <li class="contact-info__item">
+            <span class="contact-info__label">{{ 'contact.email' | t }}</span>
+            <a href="mailto:{{ section.settings.email }}">{{ section.settings.email | escape }}</a>
+          </li>
+        {%- endif -%}
+        {%- if section.settings.phone != blank -%}
+          <li class="contact-info__item">
+            <span class="contact-info__label">{{ 'contact.phone' | t }}</span>
+            <a href="tel:{{ phone_href }}">{{ section.settings.phone | escape }}</a>
+          </li>
+        {%- endif -%}
+        {%- if section.settings.hours != blank -%}
+          <li class="contact-info__item">
+            <span class="contact-info__label">{{ 'contact.hours' | t }}</span>
+            <div class="contact-info__rte">{{ section.settings.hours }}</div>
+          </li>
+        {%- endif -%}
+        {%- if section.settings.address != blank -%}
+          <li class="contact-info__item">
+            <span class="contact-info__label">{{ 'contact.address' | t }}</span>
+            <div class="contact-info__rte">{{ section.settings.address }}</div>
+          </li>
+        {%- endif -%}
+      </ul>
+
+      {%- if section.settings.faq_label != blank -%}
+        <div class="contact-info__faq">
+          <p>{{ section.settings.faq_text | escape }}</p>
+          <a href="{{ faq_url }}" class="button button--secondary contact-info__faq-button">
+            {{- section.settings.faq_label | escape -}}
+          </a>
+        </div>
+      {%- endif -%}
+    </aside>
+  </div>
+</div>
+
+{% stylesheet %}
+  .main-contact {
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+    padding-block: 0.875rem 3rem;
+  }
+
+  .main-contact__header {
+    margin-block: 1.375rem 1.5rem;
+  }
+
+  .main-contact__title {
+    margin: 0;
+    color: #000;
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .main-contact__intro {
+    max-width: 40rem;
+    margin-block-start: 0.5rem;
+    color: #313131;
+    font-size: 0.9375rem;
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .main-contact__intro p {
+    margin: 0;
+  }
+
+  .main-contact__layout {
+    display: grid;
+    gap: 1.375rem;
+  }
+
+  .contact-card {
+    padding: 1.75rem 1.25rem;
+    border-radius: 0.875rem;
+    background-color: #fbfaf6;
+  }
+
+  .contact-card__heading {
+    margin: 0 0 1.375rem;
+    color: #000;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  /* Formulario */
+  .contact-form__form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .contact-form__row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .contact-form__field {
+    display: grid;
+    gap: 0.375rem;
+    color: #646b7c;
+    font-size: 0.9375rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .contact-form__field abbr {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .contact-form__field :is(input, select, textarea) {
+    width: 100%;
+    min-height: 2.625rem;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #f3efe0;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #000;
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .contact-form__field textarea {
+    resize: vertical;
+  }
+
+  .contact-form__field :is(input, select, textarea):focus {
+    border-color: #79819a;
+    outline: none;
+  }
+
+  .contact-form__field :is(input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+
+  .contact-form__field [aria-invalid='true'] {
+    border-color: var(--color-accent);
+  }
+
+  .contact-form__submit {
+    justify-self: start;
+    min-width: 10rem;
+  }
+
+  .contact-form__note {
+    margin: 0;
+    color: #646b7c;
+    font-size: 0.875rem;
+  }
+
+  .contact-form__success {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.875rem 1rem;
+    border-radius: 6px;
+    background-color: #e3f4dd;
+    color: #0a7900;
+    font-size: 0.9375rem;
+  }
+
+  .contact-form__success svg {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .contact-form__errors {
+    padding: 0.875rem 1rem;
+    border-radius: 6px;
+    background-color: #f6e3e3;
+    color: var(--color-accent);
+    font-size: 0.9375rem;
+  }
+
+  .contact-form__errors ul {
+    margin: 0;
+    padding-inline-start: 1rem;
+  }
+
+  /* Datos de contacto */
+  .contact-info__list {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .contact-info__item {
+    display: grid;
+    gap: 0.25rem;
+    color: #000;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .contact-info__label {
+    color: #646b7c;
+    font-size: 0.9375rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .contact-info__item a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .contact-info__item a:hover {
+    text-decoration: underline;
+  }
+
+  .contact-info__rte p {
+    margin: 0;
+  }
+
+  .contact-info__faq {
+    margin-block-start: 1.75rem;
+    padding-block-start: 1.5rem;
+    border-top: 1px solid #ebe8df;
+  }
+
+  .contact-info__faq p {
+    margin: 0 0 0.875rem;
+    color: #313131;
+    font-size: 0.9375rem;
+    font-weight: 300;
+  }
+
+  .contact-info__faq-button {
+    color: var(--color-accent);
+  }
+
+  @media (min-width: 750px) {
+    .contact-card {
+      padding: 2.15625rem 1.8125rem;
+    }
+
+    .contact-form__row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 990px) {
+    .main-contact {
+      padding-block-start: 1.0625rem;
+    }
+
+    .main-contact__header {
+      margin-block: 1.6875rem 1.75rem;
+    }
+
+    .main-contact__title {
+      font-size: 1.4375rem;
+    }
+
+    .main-contact__layout {
+      grid-template-columns: minmax(0, 44.5rem) minmax(0, 25.875rem);
+      justify-content: space-between;
+      align-items: start;
+      column-gap: 1.625rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.main_contact",
+  "tag": "section",
+  "class": "main-contact-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "info": "t:info.contact_heading"
+    },
+    {
+      "type": "richtext",
+      "id": "intro",
+      "label": "t:labels.text",
+      "info": "t:info.contact_intro"
+    },
+    {
+      "type": "text",
+      "id": "form_heading",
+      "label": "t:labels.form_heading",
+      "default": "Send us a message"
+    },
+    {
+      "type": "textarea",
+      "id": "subjects",
+      "label": "t:labels.subjects",
+      "info": "t:info.subjects",
+      "default": "General question\nMy order\nShipping and delivery\nProducts and allergens\nWholesale and corporate gifts"
+    },
+    {
+      "type": "header",
+      "content": "t:general.contact_details"
+    },
+    {
+      "type": "text",
+      "id": "info_heading",
+      "label": "t:labels.heading",
+      "default": "Contact details"
+    },
+    {
+      "type": "text",
+      "id": "email",
+      "label": "t:labels.email",
+      "default": "support@spanishstore.com"
+    },
+    {
+      "type": "text",
+      "id": "phone",
+      "label": "t:labels.phone",
+      "default": "+34 123456789"
+    },
+    {
+      "type": "richtext",
+      "id": "hours",
+      "label": "t:labels.opening_hours",
+      "default": "<p>Monday to Friday: 9:00 – 18:00 (ET)</p><p>Saturday: 10:00 – 14:00 (ET)</p>"
+    },
+    {
+      "type": "richtext",
+      "id": "address",
+      "label": "t:labels.address"
+    },
+    {
+      "type": "text",
+      "id": "faq_text",
+      "label": "t:labels.faq_text",
+      "default": "Looking for a quick answer about shipping, returns or payments?"
+    },
+    {
+      "type": "text",
+      "id": "faq_label",
+      "label": "t:labels.faq_label",
+      "default": "Read our FAQ"
+    },
+    {
+      "type": "url",
+      "id": "faq_link",
+      "label": "t:labels.faq_link",
+      "info": "t:info.faq_link"
+    }
+  ]
+}
+{% endschema %}

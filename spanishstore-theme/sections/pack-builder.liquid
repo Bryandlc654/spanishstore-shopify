@@ -1,0 +1,919 @@
+{% comment %}
+  Constructor de packs ("Build your pack").
+  - Niveles (bloques "tier"): nº de productos + % de descuento + código de descuento opcional.
+  - El cliente elige un nivel y añade exactamente ese número de unidades: "+" suma una unidad
+    (se puede repetir producto) y "−" la quita. Así los niveles funcionan aunque haya pocos productos.
+  - El resumen calcula "Purchased separately", "Pack price" y el ahorro, y añade todos
+    los productos al carrito con /cart/add.js (propiedad oculta _pack para identificarlos).
+  - Si el nivel tiene código de descuento, después se redirige a /discount/CÓDIGO?redirect=/cart
+    para que Shopify lo aplique. IMPORTANTE: el tema solo MUESTRA el descuento; el descuento real
+    lo aplica Shopify con ese código o con un descuento automático configurado en el admin.
+  - Desktop: productos (4 columnas) a la izquierda y resumen fijo (sticky) a la derecha.
+  - Móvil: niveles en 2×2, productos en 2 columnas y el resumen debajo.
+  Sin productos en la colección muestra tarjetas de ejemplo y desactiva el botón.
+  Sin imagen en el resumen se usa assets/pack-banner-default.jpg (quesos y embutidos).
+{% endcomment %}
+
+{%- liquid
+  assign source = section.settings.collection | default: collections.all
+  assign limit = section.settings.products_to_show
+  assign currency = cart.currency.iso_code
+
+  assign available_count = 0
+  for product in source.products limit: limit
+    if product.available
+      assign available_count = available_count | plus: 1
+    endif
+  endfor
+
+  assign is_placeholder = false
+  if available_count == 0
+    assign is_placeholder = true
+    assign available_count = limit
+  endif
+
+  assign default_tier = section.settings.default_tier | at_most: section.blocks.size
+-%}
+
+<pack-builder
+  id="pack-builder"
+  class="pack-builder full-width"
+  data-money-format="{{ shop.money_format | strip_html | escape }}"
+  data-cart-add-url="{{ routes.cart_add_url }}.js"
+  data-cart-url="{{ routes.cart_url }}"
+  data-root-url="{{ routes.root_url }}"
+  {% if is_placeholder %}
+    data-placeholder
+  {% endif %}
+>
+  {%- if section.settings.heading != blank or section.settings.subheading != blank -%}
+    <div class="section-header">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="section-header__heading">{{ section.settings.heading | escape }}</h2>
+      {%- endif -%}
+      {%- if section.settings.subheading != blank -%}
+        <p class="section-header__subheading">{{ section.settings.subheading | escape }}</p>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  <div class="pack-builder__layout">
+    <div class="pack-builder__main">
+      <div class="pack-builder__tiers" role="group" aria-label="{{ 'pack.choose_size' | t }}">
+        {%- for block in section.blocks -%}
+          {%- assign tier_quantity = block.settings.quantity -%}
+          <button
+            type="button"
+            class="pack-tier"
+            aria-pressed="{% if forloop.index == default_tier %}true{% else %}false{% endif %}"
+            data-quantity="{{ tier_quantity }}"
+            data-discount="{{ block.settings.discount }}"
+            data-code="{{ block.settings.discount_code | strip | escape }}"
+            {{ block.shopify_attributes }}
+          >
+            <span class="pack-tier__quantity">{{ 'pack.products_count' | t: count: tier_quantity }}</span>
+            <span class="pack-tier__discount">{{ 'pack.save_percent' | t: percent: block.settings.discount }}</span>
+          </button>
+        {%- endfor -%}
+      </div>
+
+      <ul class="pack-builder__grid" role="list">
+        {%- if is_placeholder -%}
+          {%- assign sample_prices = '929,1929,1030,1929,1929,1030,929,1030' | split: ',' -%}
+          {%- for i in (1..limit) -%}
+            {%- assign sample_index = forloop.index0 | modulo: 8 -%}
+            {%- assign sample_price = sample_prices[sample_index] | plus: 0 -%}
+            <li>
+              <button type="button" class="pack-item" aria-pressed="false" data-variant-id="0" data-price="{{ sample_price }}">
+                <span class="pack-item__media">
+                  {%- assign placeholder = forloop.index0 | modulo: 6 | plus: 1 | prepend: 'product-' -%}
+                  {{ placeholder | placeholder_svg_tag: 'pack-item__image pack-item__image--placeholder' }}
+                  <span class="pack-item__toggle" aria-hidden="true">
+                    {{- 'icon-plus.svg' | inline_asset_content -}}
+                    <span class="pack-item__count" data-pack-qty></span>
+                  </span>
+                </span>
+                <span class="pack-item__title">Los Cameros Blended Cheese Cured 6 months World Cheese Award 2025-2026</span>
+                <span class="pack-item__price">{{ sample_price | money_without_currency }} {{ currency }}</span>
+              </button>
+            </li>
+          {%- endfor -%}
+        {%- else -%}
+          {%- for product in source.products limit: limit -%}
+            {%- unless product.available -%}
+              {%- continue -%}
+            {%- endunless -%}
+            {%- assign variant = product.selected_or_first_available_variant -%}
+            <li class="pack-builder__cell">
+              <button
+                type="button"
+                class="pack-item__minus"
+                aria-label="{{ 'pack.remove_one' | t: title: product.title }}"
+                data-pack-minus
+                hidden
+              >
+                −
+              </button>
+              <button
+                type="button"
+                class="pack-item"
+                aria-pressed="false"
+                aria-label="{{ 'pack.add_one' | t: title: product.title }}"
+                data-variant-id="{{ variant.id }}"
+                data-price="{{ variant.price }}"
+              >
+                <span class="pack-item__media">
+                  {%- if product.featured_media != blank -%}
+                    {{
+                      product.featured_media
+                      | image_url: width: 600
+                      | image_tag:
+                        class: 'pack-item__image',
+                        alt: '',
+                        loading: 'lazy',
+                        widths: '200, 300, 400, 600',
+                        sizes: '(min-width: 990px) 170px, 45vw'
+                    }}
+                  {%- else -%}
+                    {{ 'product-1' | placeholder_svg_tag: 'pack-item__image pack-item__image--placeholder' }}
+                  {%- endif -%}
+                  <span class="pack-item__toggle" aria-hidden="true">
+                    {{- 'icon-plus.svg' | inline_asset_content -}}
+                    <span class="pack-item__count" data-pack-qty></span>
+                  </span>
+                </span>
+                <span class="pack-item__title">{{ product.title | escape }}</span>
+                <span class="pack-item__price">{{ variant.price | money_without_currency }} {{ currency }}</span>
+              </button>
+            </li>
+          {%- endfor -%}
+        {%- endif -%}
+      </ul>
+    </div>
+
+    <aside class="pack-summary" aria-label="{{ section.settings.summary_heading | escape }}">
+      {%- if section.settings.summary_heading != blank -%}
+        <h3 class="pack-summary__heading">{{ section.settings.summary_heading | escape }}</h3>
+      {%- endif -%}
+
+      <div class="pack-summary__media">
+        {%- if section.settings.image != blank -%}
+          {{
+            section.settings.image
+            | image_url: width: 900
+            | image_tag:
+              class: 'pack-summary__image',
+              alt: section.settings.image.alt,
+              loading: 'lazy',
+              widths: '400, 600, 800, 900',
+              sizes: '(min-width: 990px) 370px, 100vw'
+          }}
+        {%- else -%}
+          {%- assign default_image_url = 'pack-banner-default.jpg' | asset_url -%}
+          <img
+            class="pack-summary__image"
+            src="{{ default_image_url }}"
+            srcset="{%- render 'asset-srcset', url: default_image_url, max: 2000 -%}"
+            sizes="(min-width: 990px) 400px, 100vw"
+            alt=""
+            width="2000"
+            height="668"
+            loading="lazy"
+            style="object-position: 78% 50%;"
+          >
+        {%- endif -%}
+      </div>
+
+      <p class="pack-summary__count" aria-live="polite">
+        {{- 'icon-check.svg' | inline_asset_content -}}
+        <span data-pack-count>{{ 'pack.selected' | t: count: 0 }}</span>
+      </p>
+
+      <dl class="pack-summary__prices">
+        <div class="pack-summary__row">
+          <dt>{{ 'pack.purchased_separately' | t }}</dt>
+          <dd><s data-pack-regular>{{ 0 | money }}</s></dd>
+        </div>
+        <div class="pack-summary__row">
+          <dt>{{ 'pack.pack_price' | t }}</dt>
+          <dd class="pack-summary__pack-price" data-pack-total>{{ 0 | money }}</dd>
+        </div>
+      </dl>
+
+      <p class="pack-summary__savings" data-pack-savings hidden></p>
+
+      <button type="button" class="button button--primary pack-summary__submit" data-pack-submit disabled>
+        {{ 'pack.add_more' | t: count: 1 }}
+      </button>
+
+      <p class="pack-summary__error" data-pack-error role="alert" hidden></p>
+
+      {%- if section.settings.note != blank -%}
+        <p class="pack-summary__note">{{ section.settings.note | escape }}</p>
+      {%- endif -%}
+    </aside>
+  </div>
+
+  {%- comment -%}
+    Textos para el JavaScript. Los plurales se piden con count: 2 y el JS cambia el "2" por el número real;
+    __AMOUNT__, __PERCENT__ y __SIZE__ son marcadores que también sustituye el JS.
+  {%- endcomment -%}
+  <script type="application/json" data-pack-strings>
+    {
+      "selectedOne": {{ 'pack.selected' | t: count: 1 | json }},
+      "selectedOther": {{ 'pack.selected' | t: count: 2 | json }},
+      "addMoreOne": {{ 'pack.add_more' | t: count: 1 | json }},
+      "addMoreOther": {{ 'pack.add_more' | t: count: 2 | json }},
+      "addToCart": {{ 'pack.add_to_cart' | t | json }},
+      "adding": {{ 'pack.adding' | t | json }},
+      "youSave": {{ 'pack.you_save' | t: amount: '__AMOUNT__', percent: '__PERCENT__' | json }},
+      "packLabel": {{ 'pack.pack_label' | t: size: '__SIZE__', percent: '__PERCENT__' | json }},
+      "error": {{ 'pack.error' | t | json }},
+      "placeholder": {{ 'pack.placeholder' | t | json }}
+    }
+  </script>
+</pack-builder>
+
+{% stylesheet %}
+  .pack-builder {
+    display: block;
+    padding-block: 2.5rem;
+  }
+
+  .pack-builder__layout {
+    display: grid;
+    gap: 2rem;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+  }
+
+  /* Niveles */
+  .pack-builder__tiers {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-block-end: 0.875rem;
+  }
+
+  .pack-tier {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.125rem;
+    min-height: 4.125rem;
+    padding: 0.5rem;
+    border: 1px solid #f3efe1;
+    border-radius: 2px;
+    background-color: #fdfdfa;
+    color: #000;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .pack-tier__quantity {
+    font-size: 0.9375rem;
+    line-height: 1.2;
+  }
+
+  .pack-tier__discount {
+    color: var(--color-accent);
+    font-size: 1.0625rem;
+    line-height: 1.2;
+  }
+
+  .pack-tier:hover:not([disabled], [aria-pressed='true']) {
+    border-color: var(--color-accent);
+  }
+
+  .pack-tier[aria-pressed='true'] {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: #fff;
+  }
+
+  .pack-tier[aria-pressed='true'] .pack-tier__discount {
+    color: #fff;
+  }
+
+  .pack-tier[disabled] {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .pack-tier:focus-visible,
+  .pack-item:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Productos */
+  .pack-builder__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pack-item {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .pack-item__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 4px;
+    background-color: #f2f2f2;
+  }
+
+  .pack-item__image {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .pack-item__image--placeholder {
+    fill: #c9c9c9;
+  }
+
+  .pack-item:hover .pack-item__image {
+    transform: scale(1.04);
+  }
+
+  .pack-item[aria-pressed='true'] .pack-item__media {
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+
+  .pack-item__toggle {
+    position: absolute;
+    right: 0.4375rem;
+    bottom: 0.5rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.0625rem;
+    height: 1.0625rem;
+    border-radius: 50%;
+    background-color: #fff;
+    color: #000;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .pack-item__toggle svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+
+  /* Con unidades elegidas, el círculo muestra cuántas en vez del "+" */
+  .pack-item__count,
+  .pack-item[aria-pressed='true'] .pack-item__toggle svg {
+    display: none;
+  }
+
+  .pack-item[aria-pressed='true'] .pack-item__count {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .pack-builder__cell {
+    position: relative;
+  }
+
+  /* Quitar una unidad */
+  .pack-item__minus {
+    position: absolute;
+    top: 0.4375rem;
+    left: 0.4375rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0 0.0625rem;
+    border: 0;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+    color: #000;
+    font: inherit;
+    font-size: 0.9375rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .pack-item__minus[hidden] {
+    display: none;
+  }
+
+  .pack-item__minus:hover {
+    color: var(--color-accent);
+  }
+
+  .pack-item__minus:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .pack-item[aria-pressed='true'] .pack-item__toggle {
+    background-color: var(--color-accent);
+    color: #fff;
+  }
+
+  .pack-item__title {
+    display: -webkit-box;
+    margin-block-start: 0.625rem;
+    overflow: hidden;
+    color: #000;
+    font-size: 0.9375rem;
+    line-height: 1.36;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .pack-item__price {
+    margin-block-start: 0.625rem;
+    color: var(--color-accent);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Resumen */
+  .pack-summary {
+    align-self: start;
+    padding: 1.6875rem 1.125rem 1.25rem;
+    border-radius: 4px;
+    background-color: var(--pack-summary-bg, #faf8f1);
+  }
+
+  .pack-summary__heading {
+    margin: 0 0 0.875rem;
+    font-size: 1.375rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .pack-summary__media {
+    aspect-ratio: 1.54;
+    overflow: hidden;
+    border-radius: 4px;
+    background-color: #e6e6e6;
+  }
+
+  .pack-summary__image {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .pack-summary__image--placeholder {
+    fill: #9a9a9a;
+  }
+
+  .pack-summary__count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.8125rem 0 0;
+    padding-block-end: 0.8125rem;
+    border-bottom: 1px solid #dad9d3;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+  }
+
+  .pack-summary__count svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: var(--color-accent);
+  }
+
+  .pack-summary__prices {
+    margin: 0;
+  }
+
+  .pack-summary__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-start: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+  }
+
+  .pack-summary__row + .pack-summary__row {
+    margin-block-start: 0.875rem;
+  }
+
+  .pack-summary__row dd {
+    margin: 0;
+  }
+
+  .pack-summary__row s {
+    color: #6b6b6b;
+  }
+
+  .pack-summary__pack-price {
+    color: var(--color-accent);
+  }
+
+  .pack-summary__savings {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.8125rem;
+    margin: 1.625rem 0 0;
+    padding: 0.5rem;
+    border-radius: 2px;
+    background-color: #eecbc7;
+    color: var(--color-accent);
+    font-size: 0.9375rem;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .pack-summary__savings[hidden] {
+    display: none;
+  }
+
+  .pack-summary__submit {
+    width: 100%;
+    min-height: 2.75rem;
+    margin-block-start: 0.8125rem;
+  }
+
+  .pack-summary__submit[disabled] {
+    border-color: #c9c9c9;
+    background-color: #c9c9c9;
+    cursor: not-allowed;
+  }
+
+  .pack-summary__error {
+    margin: 0.75rem 0 0;
+    color: var(--color-accent);
+    font-size: 0.9375rem;
+    text-align: center;
+  }
+
+  .pack-summary__note {
+    margin: 1.5rem 0 0;
+    color: #000;
+    font-size: 0.9375rem;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  @media (min-width: 750px) {
+    .pack-builder {
+      padding-block: 3rem;
+    }
+
+    .pack-builder .section-header {
+      margin-block-end: 2.3125rem;
+    }
+
+    .pack-builder__tiers,
+    .pack-builder__grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      column-gap: 0.9375rem;
+    }
+
+    .pack-builder__grid {
+      row-gap: 1.625rem;
+    }
+  }
+
+  @media (min-width: 990px) {
+    .pack-builder__layout {
+      grid-template-columns: minmax(0, 1fr) 25.375rem;
+      gap: 2.25rem;
+    }
+
+    .pack-summary {
+      position: sticky;
+      top: 1.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pack-item__image {
+      transition: none;
+    }
+
+    .pack-item:hover .pack-item__image {
+      transform: none;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class PackBuilder extends HTMLElement {
+    connectedCallback() {
+      this.strings = JSON.parse(this.querySelector('[data-pack-strings]').textContent);
+      this.moneyFormat = this.dataset.moneyFormat || '';
+      this.tiers = [...this.querySelectorAll('.pack-tier')];
+      this.items = [...this.querySelectorAll('.pack-item')];
+      this.submit = this.querySelector('[data-pack-submit]');
+      this.error = this.querySelector('[data-pack-error]');
+      // Unidades del pack en el orden en que se añadieron (un producto puede repetirse)
+      this.units = [];
+
+      this.tier = this.tiers.find((tier) => tier.getAttribute('aria-pressed') === 'true' && !tier.disabled);
+      if (!this.tier) this.selectTier(this.tiers.find((tier) => !tier.disabled));
+
+      this.tiers.forEach((tier) => tier.addEventListener('click', () => this.selectTier(tier)));
+      this.items.forEach((item) => item.addEventListener('click', () => this.addUnit(item)));
+      this.querySelectorAll('[data-pack-minus]').forEach((button) => {
+        button.addEventListener('click', () => this.removeUnit(button.parentElement.querySelector('.pack-item')));
+      });
+      this.submit.addEventListener('click', () => this.addToCart());
+      this.update();
+    }
+
+    get size() {
+      return this.tier ? Number(this.tier.dataset.quantity) : 0;
+    }
+
+    get discount() {
+      return this.tier ? Number(this.tier.dataset.discount) : 0;
+    }
+
+    selectTier(tier) {
+      if (!tier || tier.disabled) return;
+      this.tier = tier;
+      this.tiers.forEach((t) => t.setAttribute('aria-pressed', String(t === tier)));
+
+      // Si había más unidades que el nuevo tamaño, se quitan las últimas añadidas
+      this.units.length = Math.min(this.units.length, this.size);
+      this.update();
+    }
+
+    addUnit(item) {
+      if (!this.size) return;
+      this.units.push(item);
+      // Pack lleno: sale la primera unidad añadida
+      if (this.units.length > this.size) this.units.shift();
+      this.update();
+    }
+
+    removeUnit(item) {
+      const index = this.units.lastIndexOf(item);
+      if (index > -1) this.units.splice(index, 1);
+      this.update();
+    }
+
+    update() {
+      // Estado de cada tarjeta: nº de unidades, botón "−"
+      this.items.forEach((item) => {
+        const quantity = this.units.filter((unit) => unit === item).length;
+        item.setAttribute('aria-pressed', String(quantity > 0));
+        const qty = item.querySelector('[data-pack-qty]');
+        if (qty) qty.textContent = quantity > 0 ? quantity : '';
+        const minus = item.parentElement.querySelector('[data-pack-minus]');
+        if (minus) minus.hidden = quantity === 0;
+      });
+
+      const count = this.units.length;
+      const regular = this.units.reduce((sum, item) => sum + Number(item.dataset.price), 0);
+      const total = Math.round((regular * (100 - this.discount)) / 100);
+      const savings = regular - total;
+      const missing = this.size - count;
+
+      this.querySelector('[data-pack-count]').textContent =
+        count === 1 ? this.strings.selectedOne : this.strings.selectedOther.replace(/\b2\b/, count);
+      this.querySelector('[data-pack-regular]').textContent = this.formatMoney(regular);
+      this.querySelector('[data-pack-total]').textContent = this.formatMoney(total);
+
+      const savingsEl = this.querySelector('[data-pack-savings]');
+      savingsEl.hidden = savings <= 0;
+      savingsEl.textContent = this.strings.youSave
+        .replace('__AMOUNT__', this.formatMoney(savings))
+        .replace('__PERCENT__', this.discount);
+
+      if (this.hasAttribute('data-placeholder') || !this.size) {
+        this.submit.disabled = true;
+        this.submit.textContent = this.strings.placeholder;
+      } else if (missing > 0) {
+        this.submit.disabled = true;
+        this.submit.textContent =
+          missing === 1 ? this.strings.addMoreOne : this.strings.addMoreOther.replace(/\b2\b/, missing);
+      } else {
+        this.submit.disabled = false;
+        this.submit.textContent = this.strings.addToCart;
+      }
+    }
+
+    formatMoney(cents) {
+      const amount = cents / 100;
+      const withDelimiters = (value, decimals, thousands, decimal) => {
+        const [whole, fraction] = value.toFixed(decimals).split('.');
+        const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, thousands);
+        return fraction ? grouped + decimal + fraction : grouped;
+      };
+      // Sin formato de la tienda, se usa $ + importe
+      if (!this.moneyFormat) return '$' + withDelimiters(amount, 2, ',', '.');
+      return this.moneyFormat.replace(/\{\{\s*(\w+)\s*\}\}/, (_, key) => {
+        switch (key) {
+          case 'amount_no_decimals':
+            return withDelimiters(amount, 0, ',', '.');
+          case 'amount_with_comma_separator':
+            return withDelimiters(amount, 2, '.', ',');
+          case 'amount_no_decimals_with_comma_separator':
+            return withDelimiters(amount, 0, '.', ',');
+          case 'amount_with_apostrophe_separator':
+            return withDelimiters(amount, 2, "'", '.');
+          default:
+            return withDelimiters(amount, 2, ',', '.');
+        }
+      });
+    }
+
+    async addToCart() {
+      if (this.submit.disabled) return;
+      this.error.hidden = true;
+      this.submit.disabled = true;
+      this.submit.textContent = this.strings.adding;
+
+      const packLabel = this.strings.packLabel.replace('__SIZE__', this.size).replace('__PERCENT__', this.discount);
+      // Una línea por producto con su cantidad
+      const quantities = new Map();
+      this.units.forEach((item) => {
+        const id = Number(item.dataset.variantId);
+        quantities.set(id, (quantities.get(id) || 0) + 1);
+      });
+      const items = [...quantities].map(([id, quantity]) => ({ id, quantity, properties: { _pack: packLabel } }));
+
+      try {
+        if (window.themeCart) {
+          // assets/cart.js: añade el pack, aplica el código del nivel y abre el carrito lateral
+          await window.themeCart.add(items, { discountCode: this.tier.dataset.code });
+          this.update();
+          return;
+        }
+
+        const response = await fetch(this.dataset.cartAddUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ items }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.description || data.message || this.strings.error);
+        }
+
+        // Con código de descuento, Shopify lo aplica al pasar por /discount/CÓDIGO
+        const code = this.tier.dataset.code;
+        const cartUrl = this.dataset.cartUrl;
+        window.location.href = code
+          ? `${this.dataset.rootUrl.replace(/\/$/, '')}/discount/${encodeURIComponent(code)}?redirect=${encodeURIComponent(cartUrl)}`
+          : cartUrl;
+      } catch (error) {
+        this.error.textContent = error.message || this.strings.error;
+        this.error.hidden = false;
+        this.update();
+      }
+    }
+  }
+
+  if (!customElements.get('pack-builder')) {
+    customElements.define('pack-builder', PackBuilder);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:general.pack_builder",
+  "tag": "section",
+  "class": "pack-builder-section",
+  "max_blocks": 4,
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Your favorites, one better price."
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "t:labels.subheading",
+      "default": "Mix your Spanish favorites and save when you build a pack."
+    },
+    {
+      "type": "header",
+      "content": "t:general.products"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:labels.collection",
+      "info": "t:info.pack_collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "label": "t:labels.products_to_show",
+      "min": 4,
+      "max": 24,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "default_tier",
+      "label": "t:labels.default_tier",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "header",
+      "content": "t:general.summary"
+    },
+    {
+      "type": "text",
+      "id": "summary_heading",
+      "label": "t:labels.heading",
+      "default": "Your pack"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:labels.image",
+      "info": "t:info.pack_image"
+    },
+    {
+      "type": "text",
+      "id": "note",
+      "label": "t:labels.note",
+      "info": "t:info.pack_note"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tier",
+      "name": "t:general.tier",
+      "settings": [
+        {
+          "type": "range",
+          "id": "quantity",
+          "label": "t:labels.tier_quantity",
+          "min": 2,
+          "max": 20,
+          "step": 1,
+          "default": 3
+        },
+        {
+          "type": "range",
+          "id": "discount",
+          "label": "t:labels.tier_discount",
+          "min": 0,
+          "max": 50,
+          "step": 1,
+          "unit": "%",
+          "default": 5
+        },
+        {
+          "type": "text",
+          "id": "discount_code",
+          "label": "t:labels.discount_code",
+          "info": "t:info.discount_code"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.pack_builder",
+      "blocks": [
+        { "type": "tier", "settings": { "quantity": 3, "discount": 5 } },
+        { "type": "tier", "settings": { "quantity": 5, "discount": 10 } },
+        { "type": "tier", "settings": { "quantity": 8, "discount": 15 } },
+        { "type": "tier", "settings": { "quantity": 10, "discount": 20 } }
+      ]
+    }
+  ]
+}
+{% endschema %}

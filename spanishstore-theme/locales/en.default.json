@@ -1,0 +1,304 @@
+{
+  "404": {
+    "title": "404",
+    "not_found": "Page not found.",
+    "back_to_shopping": "Back to shopping",
+    "home": "Go to homepage"
+  },
+  "accessibility": {
+    "next": "Next",
+    "previous": "Previous",
+    "rating": "Rated {{ rating }} out of {{ max }} stars",
+    "slide_of": "{{ index }} of {{ count }}",
+    "skip_to_content": "Skip to content"
+  },
+  "blog": {
+    "article_comments": "Comments",
+    "article_metadata_html": "{{ date }} by {{ author }}",
+    "comment_form_body": "Comment",
+    "comment_form_email": "Email",
+    "comment_form_name": "Name",
+    "comment_form_submit": "Post",
+    "comment_form_title": "Add a comment",
+    "comment_moderated": "Thanks! Your comment will be published once it is approved.",
+    "comment_posted": "Thanks! Your comment has been posted.",
+    "all": "All",
+    "by_author": "By {{ author }}",
+    "categories": "Blog categories",
+    "no_articles": "There are no articles in this category yet.",
+    "pagination": "Blog pagination",
+    "reading_time": {
+      "one": "{{ count }} min read",
+      "other": "{{ count }} min read"
+    },
+    "share": "Share:",
+    "tags": "Tags",
+    "view_all": "View all"
+  },
+  "cart": {
+    "add_upsell": "Add {{ title }} to your order",
+    "amount": "Amount",
+    "apply": "Apply",
+    "checkout": "Checkout",
+    "close": "Close cart",
+    "continue_shopping": "Continue shopping",
+    "continue_to_payment": "Continue to payment",
+    "coupon_hint": "Enter your code and apply your discount.",
+    "coupon_placeholder": "Code",
+    "coupon_question": "Do you have a discount coupon?",
+    "discount_invalid": "This discount code can't be applied to your cart.",
+    "empty": "Your cart is empty.",
+    "error": "Something went wrong. Please try again.",
+    "free_shipping": "Free shipping",
+    "free_shipping_reached": "You've unlocked free shipping!",
+    "free_shipping_remaining": "You are just {{ amount }} away from free shipping.",
+    "in_stock": "In stock",
+    "order_summary": "Order summary",
+    "out_of_stock": "Out of stock",
+    "price": "Price",
+    "product": "Product",
+    "product_count": {
+      "one": "{{ count }} product",
+      "other": "{{ count }} products"
+    },
+    "quantity_for": "Quantity for {{ title }}",
+    "remove": "Remove",
+    "remove_discount": "Remove discount {{ code }}",
+    "remove_item": "Remove {{ title }}",
+    "savings": "Savings",
+    "sku": "SKU: {{ sku }}",
+    "subtotal": "Subtotal",
+    "subtotal_items": {
+      "one": "Subtotal ({{ count }} item)",
+      "other": "Subtotal ({{ count }} items)"
+    },
+    "taxes_at_checkout": "Taxes and shipping calculated at checkout",
+    "taxes_excluded": "Excl. taxes",
+    "taxes_included": "Taxes included",
+    "title": "Cart",
+    "total": "Total",
+    "total_to_pay": "Total to pay",
+    "update": "Update",
+    "upsell_placeholder": "Suggested product (example)",
+    "view_more": "View more",
+    "you_save": "You save {{ amount }}",
+    "you_save_percent": "You save {{ amount }} ({{ percent }}%)",
+    "complete_purchase": "Complete your purchase"
+  },
+  "customers": {
+    "login": {
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "title": "Login"
+    }
+  },
+  "collections": {
+    "all_products": "All products",
+    "breadcrumb": "Breadcrumb",
+    "clear": "Clear",
+    "clear_filters": "Clear filters",
+    "close": "Close filters",
+    "filters": "Filters",
+    "home": "Home",
+    "next_page": "Next page",
+    "no_filters": "Set up filters in the Search & Discovery app.",
+    "no_results": "No products match these filters.",
+    "order_by": "Order by",
+    "pagination": "Pagination",
+    "previous_page": "Previous page",
+    "price_max": "Maximum price",
+    "price_min": "Minimum price",
+    "products_found": {
+      "one": "{{ count }} product found",
+      "other": "{{ count }} products found"
+    },
+    "search_placeholder": "Search",
+    "subcategories": "Subcategories",
+    "title": "Collections",
+    "sort": "Sort",
+    "view_all": "View all",
+    "min": "Min",
+    "max": "Max",
+    "remove_filter": "Remove filter: {{ filter }}",
+    "go_to_page": "Page {{ page }}",
+    "showing": "Showing {{ first }}–{{ last }} of {{ total }} products"
+  },
+  "countdown": {
+    "days": "Days",
+    "hours": "Hrs",
+    "label": "Time left in the promotion",
+    "minutes": "Mins",
+    "seconds": "Secs"
+  },
+  "footer": {
+    "payment_methods_list": "We accept Apple Pay, Google Pay, PayPal, Visa, Mastercard and Revolut",
+    "copyright": "© {{ year }}, {{ shop }}. All rights reserved.",
+    "newsletter_email": "Email",
+    "newsletter_submit": "Subscribe",
+    "newsletter_success": "Thanks for subscribing!",
+    "payment_methods": "Payment methods",
+    "legal": "Legal",
+    "cookie_preferences": "Cookie preferences"
+  },
+  "gift_card": {
+    "add_to_apple_wallet": "Add to Apple Wallet",
+    "card": "Gift card",
+    "expired": "This gift card has expired",
+    "expires_on": "Expires on {{ expires_on }}",
+    "use_at_checkout": "Use this gift card at checkout"
+  },
+  "header": {
+    "blog": "Blog",
+    "account": "Account",
+    "announcements": "Announcements",
+    "cart": "Cart",
+    "cart_count": {
+      "one": "{{ count }} item",
+      "other": "{{ count }} items"
+    },
+    "close_menu": "Close menu",
+    "main_menu": "Main menu",
+    "menu": "Menu",
+    "open_menu": "Open menu",
+    "shop_all": "Shop all",
+    "view_all": "View all",
+    "categories": "Categories",
+    "back_to_categories": "Back to categories"
+  },
+  "pack": {
+    "add_one": "Add one {{ title }} to the pack",
+    "add_more": {
+      "one": "Add 1 more product",
+      "other": "Add {{ count }} more products"
+    },
+    "add_to_cart": "Add pack to cart",
+    "adding": "Adding...",
+    "choose_size": "Choose your pack size",
+    "error": "Something went wrong. Please try again.",
+    "pack_label": "Pack of {{ size }} (save {{ percent }}%)",
+    "pack_price": "Pack price",
+    "placeholder": "Choose a collection with products",
+    "remove_one": "Remove one {{ title }} from the pack",
+    "products_count": {
+      "one": "{{ count }} product",
+      "other": "{{ count }} products"
+    },
+    "purchased_separately": "Purchased separately",
+    "save_percent": "Save {{ percent }}%",
+    "selected": {
+      "one": "{{ count }} product selected",
+      "other": "{{ count }} products selected"
+    },
+    "you_save": "You save {{ amount }} ({{ percent }}%)"
+  },
+  "password": {
+    "title": "This shop is private",
+    "password": "Password",
+    "enter": "Enter"
+  },
+  "products": {
+    "add_to_cart": "Add to cart",
+    "add_to_cart_named": "Add {{ title }} to cart",
+    "best_seller": "Best seller",
+    "choose_options": "Choose options",
+    "choose_options_named": "Choose options for {{ title }}",
+    "decrease_quantity": "Decrease quantity",
+    "description": "Product description",
+    "dispatch_next": "Order within {{ time }} for the next dispatch",
+    "dispatch_today": "Order within {{ time }} for today's dispatch",
+    "from": "From",
+    "increase_quantity": "Increase quantity",
+    "origin": "Origin",
+    "percent_off": "{{ percent }}% off",
+    "regular_price": "Regular price",
+    "reviews_count": {
+      "one": "{{ count }} review",
+      "other": "{{ count }} reviews"
+    },
+    "save_percent": "Save {{ percent }}%",
+    "select_quantity": "Select the quantity",
+    "sold_out": "Sold out",
+    "unavailable": "Unavailable",
+    "units": {
+      "one": "{{ count }} unit",
+      "other": "{{ count }} units"
+    },
+    "view_image": "View image {{ number }}",
+    "code": "Code",
+    "in_stock": "In stock",
+    "you_save": "You save {{ amount }}",
+    "features": "Features",
+    "ingredients": "Ingredients",
+    "storage": "Storage",
+    "view_product": "View product",
+    "quantity": "Quantity",
+    "add_error": "This product could not be added to the cart. Please try again.",
+    "description_tab": "Description"
+  },
+  "sections": {
+    "reviews": {
+      "bar_label": "{{ stars }} stars: {{ percent }}%",
+      "verified": "Verified"
+    },
+    "hotspot": {
+      "empty": "Choose a product for this point",
+      "label": "Show product"
+    },
+    "video": {
+      "play_named": "Play video: {{ title }}"
+    },
+    "features": {
+      "go_to": "Go to slide {{ number }} of {{ count }}"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search articles, pages, or products",
+    "submit": "Search",
+    "no_results_html": "No results found for {{ terms }}",
+    "results_for_html": "{{ count }} results found for {{ terms }}",
+    "results_for": "Results for “{{ terms }}”",
+    "enter_term": "Type what you're looking for in the search box.",
+    "no_results": "No products found for “{{ terms }}”. Try other words or browse our categories.",
+    "suggestions": "Suggestions",
+    "products": "Products",
+    "view_all": "View all results for “{{ terms }}”",
+    "no_suggestions": "No products found for “{{ terms }}”.",
+    "results_count": {
+      "one": "{{ count }} product found",
+      "other": "{{ count }} products found"
+    }
+  },
+  "contact": {
+    "address": "Address",
+    "email": "Email",
+    "hours": "Opening hours",
+    "message": "Message",
+    "name": "Name",
+    "order_number": "Order number (optional)",
+    "phone": "Phone",
+    "reply_time": "We usually reply within 24 hours on business days.",
+    "required": "Required",
+    "send": "Send message",
+    "subject": "Subject",
+    "success": "Thanks for your message! We'll get back to you as soon as possible."
+  },
+  "faq": {
+    "no_results": "No questions match your search. Try other words or contact us.",
+    "search_placeholder": "Search a question",
+    "topics": "FAQ topics"
+  },
+  "newsletter_popup": {
+    "close": "Close",
+    "email": "Email address",
+    "success_title": "Welcome to the table!",
+    "success_code": "Here is your 10% off code for your first order:",
+    "success_text": "Thanks for subscribing! Check your inbox for your discount.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "shop_now": "Shop now",
+    "privacy": "Privacy Policy",
+    "terms": "Terms and Conditions"
+  }
+}

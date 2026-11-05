@@ -1,0 +1,687 @@
+{% comment %}
+  "Customer reviews": resumen de valoraciones + tarjetas de reseñas (p. ej. en la ficha de producto).
+  - Nota media y nº de reseñas: de los metafields estándar del producto (reviews.rating y
+    reviews.rating_count, los rellenan las apps de reseñas). Si el producto no los tiene,
+    se usan los ajustes "Average rating" y "Number of reviews".
+  - Barras por estrellas: % de reseñas de 5, 4, 3, 2 y 1 estrellas (ajustes de la sección).
+  - Cada reseña es un bloque "review" (nombre, verificado, estrellas, fecha y texto).
+  - Enlaces "View all" (arriba) y botón "Write a review" (abajo), p. ej. a la página de la app de reseñas.
+  Desktop: resumen a la izquierda y 3 tarjetas a la derecha (si hay más, se desplazan en horizontal).
+  Móvil: resumen arriba y tarjetas con scroll horizontal.
+{% endcomment %}
+
+{%- liquid
+  assign rating = section.settings.rating
+  assign rating_count = section.settings.review_count
+  assign product_rating = product.metafields.reviews.rating.value
+  if product_rating != blank
+    assign rating = product_rating.rating | times: 5.0 | divided_by: product_rating.scale_max | round: 1
+    assign rating_count = product.metafields.reviews.rating_count.value | default: 0
+  endif
+-%}
+
+<div class="product-reviews full-width" style="--reviews-bg: {{ section.settings.background }};">
+  <div class="product-reviews__inner">
+    {%- if section.settings.view_all_label != blank -%}
+      <div class="product-reviews__top">
+        <a
+          {% if section.settings.view_all_link != blank %}
+            href="{{ section.settings.view_all_link }}"
+          {% else %}
+            role="link" aria-disabled="true"
+          {% endif %}
+          class="section-header__link"
+        >
+          {{- section.settings.view_all_label | escape -}}
+        </a>
+      </div>
+    {%- endif -%}
+
+    <div class="product-reviews__layout">
+      <div class="product-reviews__summary">
+        {%- if section.settings.heading != blank -%}
+          <h2 class="product-reviews__heading">{{ section.settings.heading | escape }}</h2>
+        {%- endif -%}
+
+        <div class="product-reviews__overview">
+          <div class="product-reviews__score">
+            <p class="product-reviews__average">{{ rating | round: 1 }}</p>
+            <span
+              class="rating-stars product-reviews__stars"
+              style="--rating: {{ rating }};"
+              role="img"
+              aria-label="{{ 'accessibility.rating' | t: rating: rating, max: 5 }}"
+            ></span>
+            <p class="product-reviews__count">{{ 'products.reviews_count' | t: count: rating_count }}</p>
+          </div>
+
+          <ul class="product-reviews__bars" role="list">
+            {%- for stars in (1..5) reversed -%}
+              {%- liquid
+                assign percent_key = 'percent_' | append: stars
+                assign percent = section.settings[percent_key]
+              -%}
+              <li class="product-reviews__bar-row" aria-label="{{ 'sections.reviews.bar_label' | t: stars: stars, percent: percent }}">
+                <span class="product-reviews__bar-label" aria-hidden="true">
+                  {{- stars -}}
+                  <svg viewBox="2 2 20 19" aria-hidden="true">
+                    <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor" />
+                  </svg>
+                </span>
+                <span class="product-reviews__bar" style="--percent: {{ percent }}%;" aria-hidden="true"></span>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      </div>
+
+      {%- if section.blocks.size > 0 -%}
+        <scroll-dots class="product-reviews__carousel">
+        <ul class="product-reviews__list" role="list" data-scroll-track>
+          {%- for block in section.blocks -%}
+            <li class="review-card" {{ block.shopify_attributes }}>
+              <p class="review-card__author">{{ block.settings.author | escape }}</p>
+              {%- if block.settings.verified -%}
+                <p class="review-card__verified">
+                  {{- 'icon-check-circle.svg' | inline_asset_content -}}
+                  <span>{{ 'sections.reviews.verified' | t }}</span>
+                </p>
+              {%- endif -%}
+              <div class="review-card__meta">
+                <span
+                  class="rating-stars review-card__stars"
+                  style="--rating: {{ block.settings.rating }};"
+                  role="img"
+                  aria-label="{{ 'accessibility.rating' | t: rating: block.settings.rating, max: 5 }}"
+                ></span>
+                {%- if block.settings.date != blank -%}
+                  <span class="review-card__date">{{ block.settings.date | escape }}</span>
+                {%- endif -%}
+              </div>
+              {%- if block.settings.text != blank -%}
+                <div class="review-card__text">{{ block.settings.text }}</div>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+        {%- comment -%} Móvil: puntos del carrusel (el comportamiento es <scroll-dots>, de sections/main-product.liquid) {%- endcomment -%}
+        {%- if section.blocks.size > 1 -%}
+          <div class="product-reviews__dots">
+            {%- for block in section.blocks -%}
+              <button
+                type="button"
+                class="product-reviews__dot"
+                aria-label="{{ 'sections.features.go_to' | t: number: forloop.index, count: section.blocks.size }}"
+                {% if forloop.first %}
+                  aria-current="true"
+                {% endif %}
+                data-dot-index="{{ forloop.index0 }}"
+              ></button>
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+        </scroll-dots>
+      {%- endif -%}
+    </div>
+
+    {%- if section.settings.button_label != blank -%}
+      <div class="product-reviews__actions">
+        <a
+          {% if section.settings.button_link != blank %}
+            href="{{ section.settings.button_link }}"
+          {% else %}
+            role="link" aria-disabled="true"
+          {% endif %}
+          class="button button--primary product-reviews__button"
+        >
+          {{- section.settings.button_label | escape -}}
+        </a>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .product-reviews {
+    background-color: var(--reviews-bg);
+  }
+
+  .product-reviews__inner {
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+    padding-block: 2.5rem;
+  }
+
+  .product-reviews__top {
+    display: flex;
+    justify-content: flex-end;
+    margin-block-end: 1.5rem;
+  }
+
+  .product-reviews__layout {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .product-reviews__heading {
+    margin: 0;
+    color: #000;
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .product-reviews__overview {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1.25rem;
+    margin-block-start: 1.0625rem;
+  }
+
+  .product-reviews__score {
+    padding-block-start: 0.875rem;
+  }
+
+  .product-reviews__average {
+    margin: 0;
+    color: #000;
+    font-size: 2.125rem;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  .product-reviews .rating-stars {
+    --star-size: 0.75rem;
+    --star-step: 1.03125rem;
+  }
+
+  .product-reviews__stars {
+    display: block;
+    margin-block-start: 0.375rem;
+  }
+
+  .product-reviews__count {
+    margin: 0.5625rem 0 0;
+    color: #646b7c;
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
+
+  .product-reviews__bars {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .product-reviews__bar-row {
+    display: grid;
+    grid-template-columns: 1.9375rem minmax(0, 1fr);
+    align-items: center;
+    height: 2rem;
+  }
+
+  .product-reviews__bar-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #000;
+    font-size: 0.9375rem;
+    line-height: 1;
+  }
+
+  .product-reviews__bar-label svg {
+    width: 0.5rem;
+    height: 0.5rem;
+    color: var(--color-accent);
+  }
+
+  .product-reviews__bar {
+    position: relative;
+    height: 0.4375rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background-color: #f2f1ee;
+  }
+
+  /* Relleno con un mínimo para que un % pequeño se vea como un punto, como en el diseño */
+  .product-reviews__bar::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: max(var(--percent), 0.4375rem);
+    content: '';
+    border-radius: inherit;
+    background-color: var(--color-accent);
+  }
+
+  .product-reviews__bar[style*='--percent: 0%']::before {
+    display: none;
+  }
+
+  .product-reviews__list {
+    display: grid;
+    grid-auto-columns: 85%;
+    grid-auto-flow: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    list-style: none;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .product-reviews__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-reviews__dots {
+    display: none;
+  }
+
+  /* El carrusel no debe ensanchar la rejilla (si no, la página tiene scroll horizontal en móvil) */
+  .product-reviews__carousel {
+    display: block;
+    min-width: 0;
+  }
+
+  .review-card {
+    min-height: 12.375rem;
+    padding: 2.125rem 1.5rem 1.5rem;
+    border: 1px solid #eee8d6;
+    border-radius: 4px;
+    scroll-snap-align: start;
+  }
+
+  .review-card__author {
+    margin: 0;
+    color: #000;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .review-card__verified {
+    display: flex;
+    align-items: center;
+    gap: 0.3125rem;
+    margin: 0.375rem 0 0;
+    color: #646b7c;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+  }
+
+  .review-card__verified svg {
+    flex-shrink: 0;
+    width: 0.8125rem;
+    height: 0.8125rem;
+    color: #0a7900;
+  }
+
+  .review-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-block-start: 1.5625rem;
+  }
+
+  .review-card__date {
+    color: #646b7c;
+    font-size: 0.875rem;
+    line-height: 1;
+  }
+
+  .review-card__text {
+    margin-block-start: 0.5rem;
+    color: #000;
+    font-size: 0.875rem;
+    line-height: 1.1;
+  }
+
+  .review-card__text p {
+    margin: 0;
+  }
+
+  .product-reviews__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-block-start: 1.6875rem;
+  }
+
+  .product-reviews__button {
+    flex: 1 1 auto;
+    min-height: 2.125rem;
+    padding-inline: 1.25rem;
+    border-radius: 3px;
+    text-transform: none;
+  }
+
+  /* Móvil (diseño del usuario a 375 px): título de 26 px, nota de 44 px con estrellas de 20 px, barras más
+     grandes, tarjetas de 310 px (la siguiente asoma) y botón centrado de 170×46; sin "View all" */
+  @media (max-width: 749px) {
+    .product-reviews__inner {
+      padding-block: 3.5rem 3rem;
+    }
+
+    .product-reviews__top {
+      display: none;
+    }
+
+    .product-reviews__heading {
+      font-size: 1.625rem;
+      font-weight: 700;
+    }
+
+    .product-reviews__average {
+      font-size: 2.75rem;
+    }
+
+    .product-reviews .rating-stars {
+      --star-size: 1.25rem;
+      --star-step: 1.375rem;
+    }
+
+    .product-reviews__count {
+      font-size: 0.9375rem;
+    }
+
+    .product-reviews__bars {
+      gap: 0.5625rem;
+    }
+
+    .product-reviews__carousel {
+      display: block;
+    }
+
+    .product-reviews__dots {
+      display: flex;
+      justify-content: center;
+      gap: 0.375rem;
+      margin-block-start: 1.75rem;
+    }
+
+    .product-reviews__dot {
+      position: relative;
+      width: 0.5625rem;
+      height: 0.5625rem;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background-color: #e9e8e5;
+      cursor: pointer;
+    }
+
+    .product-reviews__dot::before {
+      content: '';
+      position: absolute;
+      inset: -0.5rem -0.1875rem;
+    }
+
+    .product-reviews__dot[aria-current='true'] {
+      background-color: var(--color-accent);
+    }
+
+    .product-reviews__bar-label {
+      font-size: 0.9375rem;
+    }
+
+    .product-reviews__bar-label svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+
+    .product-reviews__list {
+      grid-auto-columns: calc(100% - 1.6875rem);
+    }
+
+    .review-card {
+      min-height: 15.75rem;
+      padding: 2.625rem 1.5rem 1.5rem;
+    }
+
+    .review-card__author {
+      font-size: 1.0625rem;
+    }
+
+    .review-card__verified {
+      margin-block-start: 0.75rem;
+      font-size: 0.9375rem;
+    }
+
+    .review-card__verified svg {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+
+    .review-card__meta .rating-stars {
+      --star-size: 1.125rem;
+      --star-step: 1.375rem;
+    }
+
+    .review-card__date {
+      font-size: 0.9375rem;
+    }
+
+    .review-card__text {
+      font-size: 0.9375rem;
+      line-height: 1.25;
+    }
+
+    .product-reviews__actions {
+      justify-content: center;
+      margin-block-start: 2.5rem;
+    }
+
+    .product-reviews__button {
+      flex: 0 0 auto;
+      min-width: 10.625rem;
+      min-height: 2.875rem;
+      font-size: 1.0625rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .product-reviews__inner {
+      padding-block: 4.125rem 3.8125rem;
+    }
+
+    .product-reviews__top {
+      margin-block-end: 2.1875rem;
+    }
+
+    .product-reviews__layout {
+      grid-template-columns: minmax(0, 21.375rem) minmax(0, 47.5rem);
+      justify-content: space-between;
+      align-items: start;
+      gap: 3.125rem;
+    }
+
+    .product-reviews__heading {
+      font-size: 1.4375rem;
+    }
+
+    .product-reviews__overview {
+      grid-template-columns: 6.125rem minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .product-reviews__list {
+      grid-auto-columns: calc((100% - 0.75rem * 2) / 3);
+    }
+
+    .product-reviews__actions {
+      margin-block-start: 1.25rem;
+    }
+
+    .product-reviews__button {
+      flex: 0 0 auto;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.product_reviews",
+  "tag": "section",
+  "class": "product-reviews-section",
+  "max_blocks": 12,
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Customer reviews"
+    },
+    {
+      "type": "text",
+      "id": "view_all_label",
+      "label": "t:labels.view_all_label",
+      "default": "View all"
+    },
+    {
+      "type": "url",
+      "id": "view_all_link",
+      "label": "t:labels.view_all_link",
+      "info": "t:info.reviews_links"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:labels.button_label",
+      "default": "Write a review"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:labels.button_link"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#FAF8F1"
+    },
+    {
+      "type": "header",
+      "content": "t:general.rating"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:info.reviews_summary"
+    },
+    {
+      "type": "range",
+      "id": "rating",
+      "label": "t:labels.average_rating",
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "default": 4.8
+    },
+    {
+      "type": "number",
+      "id": "review_count",
+      "label": "t:labels.review_count",
+      "default": 508
+    },
+    {
+      "type": "range",
+      "id": "percent_5",
+      "label": "t:labels.percent_5",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 65
+    },
+    {
+      "type": "range",
+      "id": "percent_4",
+      "label": "t:labels.percent_4",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 11
+    },
+    {
+      "type": "range",
+      "id": "percent_3",
+      "label": "t:labels.percent_3",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "percent_2",
+      "label": "t:labels.percent_2",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "percent_1",
+      "label": "t:labels.percent_1",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "t:general.review",
+      "settings": [
+        {
+          "type": "text",
+          "id": "author",
+          "label": "t:labels.author",
+          "default": "Jorge M."
+        },
+        {
+          "type": "checkbox",
+          "id": "verified",
+          "label": "t:labels.verified",
+          "default": true
+        },
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "t:labels.rating",
+          "min": 1,
+          "max": 5,
+          "step": 0.5,
+          "default": 5
+        },
+        {
+          "type": "text",
+          "id": "date",
+          "label": "t:labels.review_date",
+          "default": "12 May 2026"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:labels.text",
+          "default": "<p>Lorem ipsum dolor sit amet consectetur. Purus eu faucibus nec sit sollicitudin tincidunt. Eros convallis cursus sit integer.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.product_reviews",
+      "blocks": [{ "type": "review" }, { "type": "review" }, { "type": "review" }]
+    }
+  ]
+}
+{% endschema %}

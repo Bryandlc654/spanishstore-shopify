@@ -1,0 +1,352 @@
+{% comment %}
+  "Information" de la ficha de producto: acordeón + imagen.
+  Cada pestaña es un bloque "tab" con su título y una fuente de contenido:
+  - description: la descripción del producto.
+  - metafield: un metacampo del producto (p. ej. custom.features, custom.ingredients, custom.storage).
+  - custom: texto fijo escrito en el editor (igual para todos los productos).
+  Las pestañas sin contenido no se muestran. La primera abierta por defecto (ajuste por bloque).
+  Imagen: la del ajuste o, si no hay, la 2.ª imagen del producto (o assets/product-information-default.jpg,
+  para no repetir la foto principal que ya está en la galería).
+  Fondo de color con el patrón decorativo opcional, para unirse a la barra de ventajas.
+{% endcomment %}
+
+{%- liquid
+  assign image = section.settings.image
+  if image == blank and product.media.size > 1
+    assign image = product.media[1].preview_image
+  endif
+
+  if section.settings.show_pattern
+    assign pattern_url = 'pattern-tile.svg' | asset_url
+  endif
+-%}
+
+<div
+  class="product-information full-width"
+  style="--info-bg: {{ section.settings.background }};{% if pattern_url %} --info-pattern: url('{{ pattern_url }}');{% endif %}"
+>
+  <div class="product-information__inner">
+    <div class="product-information__content">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="product-information__heading">{{ section.settings.heading | escape }}</h2>
+      {%- endif -%}
+
+      <div class="product-information__list">
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign content = blank
+            case block.settings.source
+              when 'description'
+                assign content = product.description
+              when 'metafield'
+                assign key_parts = block.settings.metafield_key | strip | split: '.'
+                if key_parts.size == 2
+                  assign mf = product.metafields[key_parts[0]][key_parts[1]]
+                  if mf != blank
+                    assign content = mf | metafield_tag
+                  endif
+                endif
+              when 'custom'
+                assign content = block.settings.content
+            endcase
+
+            if content == blank and request.design_mode
+              assign content = block.settings.content
+            endif
+          -%}
+          {%- if content != blank -%}
+            <details
+              class="product-information__item"
+              {% if block.settings.open %}
+                open
+              {% endif %}
+              {{ block.shopify_attributes }}
+            >
+              <summary class="product-information__title">
+                <span>{{ block.settings.title | escape }}</span>
+                <span class="product-information__icon" aria-hidden="true"></span>
+              </summary>
+              <div class="product-information__body rte">{{ content }}</div>
+            </details>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+
+    <div class="product-information__media">
+      {%- if image != blank -%}
+        {{
+          image
+          | image_url: width: 1200
+          | image_tag: class: 'product-information__image', alt: image.alt, loading: 'lazy', widths: '400, 600, 800, 1000, 1200', sizes: '(min-width: 990px) 515px, 100vw'
+        }}
+      {%- else -%}
+        {%- assign default_image_url = 'product-information-default.jpg' | asset_url -%}
+        <img
+          class="product-information__image"
+          src="{{ default_image_url }}"
+          srcset="{%- render 'asset-srcset', url: default_image_url, max: 736 -%}"
+          sizes="(min-width: 750px) 514px, 100vw"
+          alt=""
+          width="736"
+          height="736"
+          loading="lazy"
+        >
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .product-information {
+    background-color: var(--info-bg);
+    background-image: var(--info-pattern, none);
+    background-size: 3.875rem;
+  }
+
+  .product-information__inner {
+    display: grid;
+    gap: 2rem;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+    padding-block: 2.5rem;
+  }
+
+  .product-information__heading {
+    margin: 0 0 1.75rem;
+    color: #000;
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .product-information__item {
+    border-bottom: 1px solid #e9e4d6;
+  }
+
+  .product-information__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1.75rem;
+    color: #000;
+    font-size: 0.9375rem;
+    line-height: 1.3;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .product-information__title::-webkit-details-marker {
+    display: none;
+  }
+
+  .product-information__title:hover,
+  .product-information__item[open] .product-information__title {
+    color: var(--color-accent);
+  }
+
+  .product-information__title:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Icono + que pasa a − al abrir */
+  .product-information__icon {
+    position: relative;
+    flex-shrink: 0;
+    width: 0.6875rem;
+    height: 0.6875rem;
+    color: var(--color-accent);
+  }
+
+  .product-information__icon::before,
+  .product-information__icon::after {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    content: '';
+    background-color: currentcolor;
+    translate: 0 -50%;
+    transition: rotate 0.2s ease, opacity 0.2s ease;
+  }
+
+  .product-information__icon::after {
+    rotate: 90deg;
+  }
+
+  .product-information__item[open] .product-information__icon::after {
+    opacity: 0;
+    rotate: 0deg;
+  }
+
+  .product-information__item[open] .product-information__title {
+    padding-block-end: 0.375rem;
+  }
+
+  .product-information__body {
+    padding-block-end: 0.125rem;
+    color: #6f6f6f;
+    font-size: 0.875rem;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  .product-information__body p {
+    margin: 0;
+  }
+
+  .product-information__body p + p,
+  .product-information__body ul {
+    margin-block-start: 0.5rem;
+  }
+
+  .product-information__media {
+    aspect-ratio: 514 / 390;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: #e6e6e6;
+  }
+
+  .product-information__image {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  /* Móvil (diseño del usuario): título centrado de 29 px, pestañas de 17 px en negrita (la abierta en rojo)
+     y texto de 14 px */
+  @media (max-width: 749px) {
+    .product-information__heading {
+      font-size: 1.8125rem;
+      text-align: center;
+    }
+
+    .product-information__title {
+      padding-block: 1.125rem;
+      font-size: 1.0625rem;
+      font-weight: 700;
+    }
+
+    .product-information__body {
+      font-size: 0.9375rem;
+      line-height: 1.45;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .product-information__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 32.125rem);
+      align-items: start;
+      gap: 4.125rem;
+      padding-block: 2.3125rem 3rem;
+    }
+
+    /* Como en el diseño, el título empieza algo más abajo que la imagen */
+    .product-information__content {
+      padding-block-start: 1.4375rem;
+    }
+
+    .product-information__heading {
+      margin-block-end: 1.5rem;
+      font-size: 1.4375rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.product_information",
+  "tag": "section",
+  "class": "product-information-section",
+  "max_blocks": 8,
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Information"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:labels.image",
+      "info": "t:info.product_information_image"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#FAF8F1"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_pattern",
+      "label": "t:labels.show_pattern",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tab",
+      "name": "t:general.tab",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:labels.title",
+          "default": "Features"
+        },
+        {
+          "type": "select",
+          "id": "source",
+          "label": "t:labels.content_source",
+          "options": [
+            { "value": "description", "label": "t:options.content_source.description" },
+            { "value": "metafield", "label": "t:options.content_source.metafield" },
+            { "value": "custom", "label": "t:options.content_source.custom" }
+          ],
+          "default": "metafield"
+        },
+        {
+          "type": "text",
+          "id": "metafield_key",
+          "label": "t:labels.metafield_key",
+          "info": "t:info.metafield_key",
+          "default": "custom.features"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "t:labels.text",
+          "info": "t:info.tab_content"
+        },
+        {
+          "type": "checkbox",
+          "id": "open",
+          "label": "t:labels.open_by_default",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.product_information",
+      "blocks": [
+        { "type": "tab", "settings": { "title": "Description", "source": "description", "open": true } },
+        { "type": "tab", "settings": { "title": "Features", "metafield_key": "custom.features" } },
+        { "type": "tab", "settings": { "title": "Ingredients", "metafield_key": "custom.ingredients" } },
+        { "type": "tab", "settings": { "title": "Storage", "metafield_key": "custom.storage" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

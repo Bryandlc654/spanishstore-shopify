@@ -1,0 +1,386 @@
+{% comment %}
+  Testimonios de clientes en un slider (uno visible a la vez).
+  Cada testimonio es un bloque con vídeo (snippet compartido video-card: portada + play),
+  nombre, fecha y texto. Las flechas recorren los testimonios en bucle y, al cambiar,
+  se pausa el vídeo que estuviera sonando.
+  - Desktop: vídeo cuadrado a la izquierda y texto centrado a la derecha, sobre una franja
+    de color con patrón decorativo a todo el ancho.
+  - Móvil: vídeo arriba y texto debajo.
+  Sin portada (ni vídeo con vista previa) se usa assets/testimonial-default.jpg (tabla de quesos
+  del usuario), con el icono de play.
+{% endcomment %}
+
+{%- liquid
+  if section.settings.pattern_image != blank
+    assign pattern_url = section.settings.pattern_image | image_url: width: 300
+  elsif section.settings.show_pattern
+    assign pattern_url = 'pattern-tile.svg' | asset_url
+  endif
+  assign total = section.blocks.size
+  assign default_cover = 'testimonial-default.jpg' | asset_url
+-%}
+
+{%- if total > 0 -%}
+  <testimonial-slider
+    class="testimonials full-width"
+    style="--testimonials-bg: {{ section.settings.background }};{% if pattern_url %} --testimonials-pattern: url('{{ pattern_url }}');{% endif %}"
+    role="region"
+    aria-roledescription="carousel"
+    aria-label="{{ section.settings.label | escape }}"
+  >
+    <div class="testimonials__inner">
+      {%- for block in section.blocks -%}
+        <div
+          class="testimonial"
+          role="group"
+          aria-roledescription="slide"
+          aria-label="{{ 'accessibility.slide_of' | t: index: forloop.index, count: total }}"
+          data-slide
+          {% unless forloop.first %}
+            hidden
+          {% endunless %}
+          {{ block.shopify_attributes }}
+        >
+          <div class="testimonial__media">
+            {%- render 'video-card',
+              video: block.settings.video,
+              video_url: block.settings.video_url,
+              cover: block.settings.cover,
+              cover_url: default_cover,
+              cover_width: 820,
+              cover_height: 1208,
+              label: block.settings.name,
+              ratio: '1',
+              sizes: '(min-width: 990px) 365px, (min-width: 750px) 40vw, 100vw',
+              placeholder_index: forloop.index0
+            -%}
+          </div>
+
+          <div class="testimonial__body">
+            {%- if block.settings.name != blank -%}
+              <p class="testimonial__name">{{ block.settings.name | escape }}</p>
+            {%- endif -%}
+            {%- if block.settings.date != blank -%}
+              <p class="testimonial__date">{{ block.settings.date | escape }}</p>
+            {%- endif -%}
+            {%- if block.settings.text != blank -%}
+              <div class="testimonial__text">{{ block.settings.text }}</div>
+            {%- endif -%}
+
+            {%- if total > 1 -%}
+              <div class="testimonial__nav">
+                <button
+                  type="button"
+                  class="testimonial__arrow testimonial__arrow--prev"
+                  aria-label="{{ 'accessibility.previous' | t }}"
+                  data-testimonial-prev
+                >
+                  {{- 'icon-arrow-right.svg' | inline_asset_content -}}
+                </button>
+                <button
+                  type="button"
+                  class="testimonial__arrow testimonial__arrow--next"
+                  aria-label="{{ 'accessibility.next' | t }}"
+                  data-testimonial-next
+                >
+                  {{- 'icon-arrow-right.svg' | inline_asset_content -}}
+                </button>
+              </div>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endfor -%}
+    </div>
+  </testimonial-slider>
+{%- endif -%}
+
+{% stylesheet %}
+  .testimonials {
+    display: block;
+    margin-block: 2.5rem;
+    background-color: var(--testimonials-bg);
+    background-image: var(--testimonials-pattern, none);
+    background-repeat: repeat;
+    background-size: 3.875rem;
+  }
+
+  .testimonials__inner {
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+    padding-block: 2rem;
+  }
+
+  .testimonial {
+    display: grid;
+    gap: 1.75rem;
+    align-items: center;
+    animation: testimonial-in 0.4s ease;
+  }
+
+  /* Al cambiar de testimonio, el nuevo entra con un fundido y un desplazamiento corto */
+  @media (prefers-reduced-motion: no-preference) {
+    .testimonial:not([hidden]) {
+      animation: testimonial-in 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes testimonial-in {
+      from {
+        opacity: 0;
+        translate: 1.5rem 0;
+      }
+    }
+  }
+
+  .testimonial[hidden] {
+    display: none;
+  }
+
+  @keyframes testimonial-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .testimonial__media {
+    width: 100%;
+    max-width: 22.8125rem;
+    margin-inline: auto;
+  }
+
+  .testimonial__body {
+    max-width: 28.5rem;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .testimonial__name {
+    margin: 0;
+    color: var(--color-accent);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .testimonial__date {
+    margin: 0.5rem 0 0;
+    color: #5d5a52;
+    font-size: 0.9375rem;
+    font-weight: 300;
+    line-height: 1.3;
+  }
+
+  .testimonial__text {
+    margin-block-start: 1.0625rem;
+    color: #35342d;
+    font-size: 0.9375rem;
+    font-weight: 300;
+    line-height: 1.26;
+  }
+
+  .testimonial__text p {
+    margin: 0;
+  }
+
+  .testimonial__nav {
+    display: flex;
+    justify-content: center;
+    margin-block-start: 1.25rem;
+  }
+
+  .testimonial__arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.625rem;
+    height: 1.625rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: #000;
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .testimonial__arrow svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .testimonial__arrow--prev svg {
+    rotate: 180deg;
+  }
+
+  .testimonial__arrow--next {
+    color: var(--color-accent);
+  }
+
+  .testimonial__arrow:hover {
+    background-color: color-mix(in srgb, currentcolor 10%, transparent);
+  }
+
+  .testimonial__arrow:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  @media (min-width: 750px) {
+    .testimonials {
+      margin-block: 3rem;
+    }
+
+    .testimonials__inner {
+      padding: 2.1875rem 3.9375rem 2.4375rem;
+    }
+
+    .testimonial {
+      grid-template-columns: minmax(0, 22.8125rem) minmax(0, 1fr);
+      gap: 4.1875rem;
+    }
+
+    .testimonial__media {
+      margin-inline: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .testimonial {
+      animation: none;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class TestimonialSlider extends HTMLElement {
+    connectedCallback() {
+      this.slides = [...this.querySelectorAll('[data-slide]')];
+      this.index = 0;
+      if (this.slides.length < 2) return;
+
+      this.querySelectorAll('[data-testimonial-prev]').forEach((button) =>
+        button.addEventListener('click', () => this.go(this.index - 1, button))
+      );
+      this.querySelectorAll('[data-testimonial-next]').forEach((button) =>
+        button.addEventListener('click', () => this.go(this.index + 1, button))
+      );
+
+      // En el editor de temas, al seleccionar un bloque se muestra su testimonio
+      this.addEventListener('shopify:block:select', (event) => {
+        const index = this.slides.indexOf(event.target.closest('[data-slide]'));
+        if (index > -1) this.go(index);
+      });
+    }
+
+    go(index, fromButton) {
+      const total = this.slides.length;
+      const next = (index + total) % total;
+      const current = this.slides[this.index];
+
+      // Pausa el vídeo del testimonio que se oculta
+      current.querySelectorAll('video-card').forEach((card) => card.pause && card.pause());
+
+      current.hidden = true;
+      this.slides[next].hidden = false;
+      this.index = next;
+
+      // Mantiene el foco en la misma flecha del nuevo testimonio (accesibilidad con teclado)
+      if (fromButton) {
+        const selector = fromButton.hasAttribute('data-testimonial-prev')
+          ? '[data-testimonial-prev]'
+          : '[data-testimonial-next]';
+        this.slides[next].querySelector(selector)?.focus();
+      }
+    }
+  }
+
+  if (!customElements.get('testimonial-slider')) {
+    customElements.define('testimonial-slider', TestimonialSlider);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:general.testimonials",
+  "tag": "section",
+  "class": "testimonials-section",
+  "max_blocks": 12,
+  "settings": [
+    {
+      "type": "text",
+      "id": "label",
+      "label": "t:labels.section_label",
+      "info": "t:info.section_label",
+      "default": "Customer testimonials"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#FAF8F1"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_pattern",
+      "label": "t:labels.show_pattern",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "pattern_image",
+      "label": "t:labels.pattern_image",
+      "info": "t:info.pattern_image"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "t:general.testimonial",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "cover",
+          "label": "t:labels.cover_image",
+          "info": "t:info.testimonial_cover"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "t:labels.video",
+          "info": "t:info.video_upload"
+        },
+        {
+          "type": "video_url",
+          "id": "video_url",
+          "label": "t:labels.video_url",
+          "accept": ["youtube", "vimeo"],
+          "info": "t:info.video_url"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "t:labels.name",
+          "default": "Ariadne Diaz"
+        },
+        {
+          "type": "text",
+          "id": "date",
+          "label": "t:labels.date",
+          "default": "30/09/26"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:labels.text",
+          "default": "<p>Lorem ipsum dolor sit amet consectetur. Rhoncus fames dolor sagittis vel sem sagittis euismod quis aenean.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.testimonials",
+      "blocks": [{ "type": "testimonial" }, { "type": "testimonial" }, { "type": "testimonial" }]
+    }
+  ]
+}
+{% endschema %}

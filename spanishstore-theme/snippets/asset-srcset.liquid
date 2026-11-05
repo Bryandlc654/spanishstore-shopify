@@ -1,0 +1,26 @@
+{% doc %}
+  Devuelve el valor de un atributo srcset para una imagen del tema (assets/), en varios anchos.
+  El CDN de Shopify redimensiona el archivo con el parámetro "width" (y lo sirve en WebP/AVIF si el
+  navegador lo admite), así cada pantalla descarga solo el tamaño que necesita.
+
+  @param {string} url - URL del asset (resultado de asset_url, ya lleva "?v=")
+  @param {number} max - Ancho real del archivo en píxeles (el último tamaño de la lista)
+
+  @example
+  <img src="{{ 'hero-default.jpg' | asset_url }}" srcset="{% render 'asset-srcset', url: hero_url, max: 1479 %}" sizes="100vw">
+{% enddoc %}
+
+{%- liquid
+  assign separator = '&'
+  unless url contains '?'
+    assign separator = '?'
+  endunless
+  assign widths = '300,450,600,800,1000,1300,1600,2000' | split: ','
+  assign max_width = max | plus: 0
+-%}
+{%- for w in widths -%}
+  {%- assign width = w | plus: 0 -%}
+  {%- if width < max_width -%}
+    {{- url }}{{ separator }}width={{ width }} {{ width }}w, {% endif -%}
+{%- endfor -%}
+{{- url }}{{ separator }}width={{ max_width }} {{ max_width }}w

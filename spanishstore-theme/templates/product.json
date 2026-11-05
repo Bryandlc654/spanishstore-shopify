@@ -1,0 +1,428 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "tier_2": {
+          "type": "tier",
+          "settings": {
+            "quantity": 2,
+            "discount": 5,
+            "discount_code": "",
+            "ribbon": "Best seller"
+          }
+        },
+        "tier_3": {
+          "type": "tier",
+          "settings": {
+            "quantity": 3,
+            "discount": 10,
+            "discount_code": "",
+            "ribbon": ""
+          }
+        },
+        "tier_6": {
+          "type": "tier",
+          "settings": {
+            "quantity": 6,
+            "discount": 15,
+            "discount_code": "",
+            "ribbon": ""
+          }
+        },
+        "video_1": {
+          "type": "video",
+          "settings": {
+            "title": "Customer video 1"
+          }
+        },
+        "video_2": {
+          "type": "video",
+          "settings": {
+            "title": "Customer video 2"
+          }
+        },
+        "video_3": {
+          "type": "video",
+          "settings": {
+            "title": "Customer video 3"
+          }
+        }
+      },
+      "block_order": [
+        "tier_2",
+        "tier_3",
+        "tier_6",
+        "video_1",
+        "video_2",
+        "video_3"
+      ],
+      "settings": {
+        "tax_note": "VAT included. Free shipping.",
+        "tiers_heading": "Unmissable discounts",
+        "xsell_heading": "Complete your purchase",
+        "xsell_checked": true,
+        "show_delivery": true,
+        "delivery_heading": "Estimated delivery in 24 - 48 hours",
+        "cutoff_time": "14:00",
+        "dispatch_days": "1,2,3,4,5",
+        "show_dynamic_checkout": true,
+        "show_payment_icons": true,
+        "ugc_heading": "From our customer's tables",
+        "ugc_text": "Real moments shared by our community."
+      }
+    },
+    "product_features": {
+      "type": "features-bar",
+      "blocks": {
+        "f_chilled": {
+          "type": "feature",
+          "settings": {
+            "icon": "snowflake",
+            "title": "Carefully chilled",
+            "text": "<p>Thermal packaging for sensitive products</p>"
+          }
+        },
+        "f_spain": {
+          "type": "feature",
+          "settings": {
+            "icon": "globe",
+            "title": "From Spain",
+            "text": "<p>Authentic Spanish products</p>"
+          }
+        },
+        "f_payment": {
+          "type": "feature",
+          "settings": {
+            "icon": "lock",
+            "title": "Secure payment",
+            "text": "<p>Different payment methods</p>"
+          }
+        }
+      },
+      "block_order": [
+        "f_chilled",
+        "f_spain",
+        "f_payment"
+      ],
+      "settings": {
+        "background": "#FAF8F1",
+        "icon_color": "#BE1621",
+        "show_pattern": true,
+        "width": "wide"
+      }
+    },
+    "product_information": {
+      "type": "product-information",
+      "blocks": {
+        "tab_description": {
+          "type": "tab",
+          "settings": {
+            "title": "Description",
+            "source": "description",
+            "metafield_key": "",
+            "content": "<p>Artisanal Blended Cheese (Cow, Sheep, Goat) Cured 6 months, sliced.</p>",
+            "open": true
+          }
+        },
+        "tab_features": {
+          "type": "tab",
+          "settings": {
+            "title": "Features",
+            "source": "metafield",
+            "metafield_key": "custom.features",
+            "content": "<p>Lorem ipsum dolor sit amet consectetur.</p>",
+            "open": false
+          }
+        },
+        "tab_ingredients": {
+          "type": "tab",
+          "settings": {
+            "title": "Ingredients",
+            "source": "metafield",
+            "metafield_key": "custom.ingredients",
+            "content": "<p>Lorem ipsum dolor sit amet consectetur.</p>",
+            "open": false
+          }
+        },
+        "tab_storage": {
+          "type": "tab",
+          "settings": {
+            "title": "Storage",
+            "source": "metafield",
+            "metafield_key": "custom.storage",
+            "content": "<p>Lorem ipsum dolor sit amet consectetur.</p>",
+            "open": false
+          }
+        }
+      },
+      "block_order": [
+        "tab_description",
+        "tab_features",
+        "tab_ingredients",
+        "tab_storage"
+      ],
+      "settings": {
+        "heading": "Information",
+        "background": "#FAF8F1",
+        "show_pattern": true
+      }
+    },
+    "shop_the_table": {
+      "type": "shoppable-image",
+      "blocks": {
+        "spot_1": {
+          "type": "hotspot",
+          "settings": {
+            "x": 39,
+            "y": 18
+          }
+        },
+        "spot_2": {
+          "type": "hotspot",
+          "settings": {
+            "x": 11,
+            "y": 31
+          }
+        },
+        "spot_3": {
+          "type": "hotspot",
+          "settings": {
+            "x": 31,
+            "y": 46
+          }
+        },
+        "spot_4": {
+          "type": "hotspot",
+          "settings": {
+            "x": 54,
+            "y": 39
+          }
+        },
+        "spot_5": {
+          "type": "hotspot",
+          "settings": {
+            "x": 75,
+            "y": 10
+          }
+        },
+        "spot_6": {
+          "type": "hotspot",
+          "settings": {
+            "x": 91,
+            "y": 71
+          }
+        },
+        "spot_7": {
+          "type": "hotspot",
+          "settings": {
+            "x": 11,
+            "y": 63
+          }
+        },
+        "spot_8": {
+          "type": "hotspot",
+          "settings": {
+            "x": 31,
+            "y": 72
+          }
+        }
+      },
+      "block_order": [
+        "spot_1",
+        "spot_2",
+        "spot_3",
+        "spot_4",
+        "spot_5",
+        "spot_6",
+        "spot_7",
+        "spot_8"
+      ],
+      "settings": {}
+    },
+    "pack_banner": {
+      "type": "hero",
+      "settings": {
+        "background": "#FDF3E6",
+        "overlay_opacity": 0,
+        "layout": "contained",
+        "height": 205,
+        "height_mobile": 300,
+        "content_position": "center",
+        "text_color": "#000000",
+        "show_rating": false,
+        "heading": "Your perfect pack, your way",
+        "heading_tag": "h2",
+        "uppercase_heading": false,
+        "text": "<p>Mix your favorite Spanish flavours in one delicious selection.</p>",
+        "text_size": "xsmall",
+        "uppercase_buttons": false,
+        "button_label_1": "Create your pack",
+        "button_link_1": "/#pack-builder",
+        "button_label_2": "",
+        "default_image": "pack",
+        "mobile_full_width": true
+      }
+    },
+    "tapas_help": {
+      "type": "image-with-list",
+      "blocks": {
+        "item_1": {
+          "type": "item",
+          "settings": {
+            "text": "Explore products by category"
+          }
+        },
+        "item_2": {
+          "type": "item",
+          "settings": {
+            "text": "Pair cheese, charcuterie and pantry favorites."
+          }
+        },
+        "item_3": {
+          "type": "item",
+          "settings": {
+            "text": "Build a pack that suits your table."
+          }
+        }
+      },
+      "block_order": [
+        "item_1",
+        "item_2",
+        "item_3"
+      ],
+      "settings": {
+        "image_position": "left",
+        "layout": "split",
+        "heading": "A little help for your next",
+        "heading_highlight": "Tapas night.",
+        "button_label": "Discover the collection",
+        "button_link": "",
+        "background": "#FAF8F1",
+        "highlight_color": "#BE1621",
+        "show_pattern": true
+      }
+    },
+    "you_may_also_like": {
+      "type": "product-carousel",
+      "settings": {
+        "heading": "You may also like",
+        "view_all_label": "View all",
+        "view_all_link": "",
+        "source": "related",
+        "products_to_show": 8,
+        "columns": 4,
+        "show_arrows": true,
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true
+      }
+    },
+    "sharing_banner": {
+      "type": "text-banner",
+      "settings": {
+        "heading": "A taste of Spanish, made for sharing",
+        "uppercase_heading": true,
+        "text": "<p>Exceptional Spanish products, selected with care, to turn everyday moments into special ones.</p>",
+        "button_label": "",
+        "button_link": "",
+        "height": 200,
+        "background": "#BE1621",
+        "text_color": "#FFFFFF",
+        "show_pattern": true
+      }
+    },
+    "customer_reviews": {
+      "type": "product-reviews",
+      "blocks": {
+        "review_1": {
+          "type": "review",
+          "settings": {
+            "author": "Jorge M.",
+            "verified": true,
+            "rating": 5,
+            "date": "12 May 2026",
+            "text": "<p>Lorem ipsum dolor sit amet consectetur. Purus eu faucibus nec sit sollicitudin tincidunt. Eros convallis cursus sit integer.</p>"
+          }
+        },
+        "review_2": {
+          "type": "review",
+          "settings": {
+            "author": "Jorge M.",
+            "verified": true,
+            "rating": 5,
+            "date": "12 May 2026",
+            "text": "<p>Lorem ipsum dolor sit amet consectetur. Purus eu faucibus nec sit sollicitudin tincidunt. Eros convallis cursus sit integer.</p>"
+          }
+        },
+        "review_3": {
+          "type": "review",
+          "settings": {
+            "author": "Jorge M.",
+            "verified": true,
+            "rating": 5,
+            "date": "12 May 2026",
+            "text": "<p>Lorem ipsum dolor sit amet consectetur. Purus eu faucibus nec sit sollicitudin tincidunt. Eros convallis cursus sit integer.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "review_1",
+        "review_2",
+        "review_3"
+      ],
+      "settings": {
+        "heading": "Customer reviews",
+        "view_all_label": "View all",
+        "view_all_link": "",
+        "button_label": "Write a review",
+        "button_link": "",
+        "background": "#FAF8F1",
+        "rating": 4.8,
+        "review_count": 508,
+        "percent_5": 65,
+        "percent_4": 11,
+        "percent_3": 3,
+        "percent_2": 0,
+        "percent_1": 0
+      }
+    },
+    "ham_day": {
+      "type": "countdown-bar",
+      "settings": {
+        "mode": "daily",
+        "heading": "Today is Ham Day",
+        "subheading": "September 28",
+        "end_date": "",
+        "end_time": "23:59",
+        "when_expired": "hide",
+        "badge_label": "-15% + GIFT",
+        "badge_link": "",
+        "background": "#000000",
+        "text_color": "#FFFFFF",
+        "show_pattern": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "product_features",
+    "product_information",
+    "shop_the_table",
+    "pack_banner",
+    "tapas_help",
+    "you_may_also_like",
+    "sharing_banner",
+    "customer_reviews",
+    "ham_day"
+  ]
+}

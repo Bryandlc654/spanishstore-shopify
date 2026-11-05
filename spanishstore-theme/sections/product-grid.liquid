@@ -1,0 +1,400 @@
+{% comment %}
+  Rejilla de productos de una colección ("More to discover") con botón centrado debajo.
+  Usa la misma tarjeta que el carrusel (snippets/product-card.liquid).
+  Opcional: tarjeta promocional de color en la primera posición (titular, texto y botón),
+  p. ej. "Your Spanish favorites are waiting" en la página de tienda.
+  - Desktop: 4 columnas (configurable). Tablet: 3. Móvil: 2.
+  Sin colección elegida usa "todos los productos". Si la tienda no tiene productos,
+  muestra tarjetas de ejemplo.
+{% endcomment %}
+
+{%- liquid
+  assign source = section.settings.collection | default: collections.all
+  assign limit = section.settings.products_to_show
+
+  if section.settings.button_link != blank
+    assign button_url = section.settings.button_link
+  elsif section.settings.collection != blank
+    assign button_url = section.settings.collection.url
+  else
+    assign button_url = routes.all_products_collection_url
+  endif
+
+  assign has_products = false
+  if source.products_count > 0
+    assign has_products = true
+  endif
+-%}
+
+<div
+  class="product-grid full-width"
+  style="--grid-columns: {{ section.settings.columns }}; --grid-row-gap: {{ section.settings.row_gap | divided_by: 16.0 }}rem;"
+>
+  {%- if section.settings.heading != blank -%}
+    <div class="section-header">
+      <h2 class="section-header__heading">{{ section.settings.heading | escape }}</h2>
+    </div>
+  {%- endif -%}
+
+  <ul class="product-grid__list" role="list">
+    {%- if section.settings.show_promo -%}
+      <li
+        class="promo-tile"
+        style="--promo-tile-bg: {{ section.settings.promo_background }}; --promo-tile-fg: {{ section.settings.promo_text_color }}; --promo-tile-button-bg: {{ section.settings.promo_button_background }}; --promo-tile-button-fg: {{ section.settings.promo_button_text }};"
+      >
+        <div class="promo-tile__content">
+          {%- if section.settings.promo_heading != blank -%}
+            <h3 class="promo-tile__heading">{{ section.settings.promo_heading | escape }}</h3>
+          {%- endif -%}
+          {%- if section.settings.promo_text != blank -%}
+            <p class="promo-tile__text">{{ section.settings.promo_text | escape }}</p>
+          {%- endif -%}
+          {%- if section.settings.promo_button_label != blank -%}
+            <a
+              {% if section.settings.promo_button_link != blank %}
+                href="{{ section.settings.promo_button_link }}"
+              {% else %}
+                href="{{ button_url }}"
+              {% endif %}
+              class="button promo-tile__button"
+            >
+              {{- section.settings.promo_button_label | escape -}}
+            </a>
+          {%- endif -%}
+        </div>
+      </li>
+    {%- endif -%}
+    {%- if has_products -%}
+      {%- for product in source.products limit: limit -%}
+        <li>
+          {%- render 'product-card',
+            product: product,
+            badge_source: section.settings.badge_source,
+            tax_note: section.settings.tax_note,
+            show_rating: section.settings.show_rating,
+            full_button: section.settings.mobile_add_button
+          -%}
+        </li>
+      {%- endfor -%}
+    {%- else -%}
+      {%- for i in (1..limit) -%}
+        <li>
+          {%- render 'product-card',
+            placeholder_index: forloop.index0,
+            badge_source: section.settings.badge_source,
+            tax_note: section.settings.tax_note,
+            show_rating: section.settings.show_rating,
+            full_button: section.settings.mobile_add_button
+          -%}
+        </li>
+      {%- endfor -%}
+    {%- endif -%}
+  </ul>
+
+  {%- if section.settings.button_label != blank -%}
+    <div class="product-grid__footer">
+      <a href="{{ button_url }}" class="button button--primary product-grid__button">
+        {{- section.settings.button_label | escape -}}
+      </a>
+    </div>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .product-grid {
+    padding-block: 2.5rem;
+  }
+
+  /* Sin título, menos espacio arriba (p. ej. justo debajo de un banner) */
+  .product-grid:not(:has(.section-header)) {
+    padding-block-start: 1.5rem;
+  }
+
+  .product-grid__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-row-gap, 1.5rem) 0.75rem;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Tarjeta promocional (ocupa una celda; en móvil, las dos columnas) */
+  .promo-tile {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    min-height: 15rem;
+    padding: 1.75rem 1.8125rem;
+    border-radius: 5px;
+    background-color: var(--promo-tile-bg);
+    color: var(--promo-tile-fg);
+  }
+
+  .promo-tile__heading {
+    margin: 0;
+    font-size: 1.4375rem;
+    font-weight: 700;
+    line-height: 1.17;
+    text-transform: uppercase;
+  }
+
+  .promo-tile__text {
+    margin: 0.25rem 0 0;
+    font-size: 0.9375rem;
+    font-weight: 300;
+    line-height: 1.35;
+  }
+
+  .promo-tile__button {
+    margin-block-start: 1.25rem;
+    border-color: var(--promo-tile-button-bg);
+    border-radius: 3px;
+    background-color: var(--promo-tile-button-bg);
+    color: var(--promo-tile-button-fg);
+  }
+
+  .promo-tile__button:hover {
+    border-color: color-mix(in srgb, var(--promo-tile-button-bg) 85%, #000);
+    background-color: color-mix(in srgb, var(--promo-tile-button-bg) 85%, #000);
+  }
+
+  .product-grid__footer {
+    display: flex;
+    justify-content: center;
+    margin-block-start: 2.5rem;
+  }
+
+  /* Botón en minúsculas y algo más grande, como en el diseño */
+  .product-grid__button {
+    min-height: 2.1875rem;
+    padding-block: 0.25rem;
+    border-radius: 4px;
+    font-size: 1.0625rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  /* Móvil (diseño del usuario a 375 px): tarjeta promocional alta (509 px), título de 29 px, texto de 18 px
+     y botón de 154×56 con texto de 18 px */
+  @media (max-width: 749px) {
+    .promo-tile {
+      min-height: 31.8125rem;
+      padding: 2rem 2.25rem;
+    }
+
+    .promo-tile__heading {
+      font-size: 1.8125rem;
+      line-height: 2.21875rem;
+    }
+
+    .promo-tile__text {
+      margin-block-start: 0.375rem;
+      font-size: 1.125rem;
+      line-height: 1.375rem;
+      text-wrap: wrap;
+    }
+
+    .promo-tile__button {
+      min-height: 3.5rem;
+      margin-block-start: 1.75rem;
+      padding-inline: 1.5rem;
+      font-size: 1.125rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .product-grid {
+      padding-block: 3rem;
+    }
+
+    .product-grid__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 0.9375rem;
+    }
+
+    .promo-tile {
+      grid-column: auto;
+      min-height: 0;
+    }
+
+    .product-grid__footer {
+      margin-block-start: 3.375rem;
+    }
+  }
+
+  @media (min-width: 990px) {
+    .product-grid__list {
+      grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.product_grid",
+  "tag": "section",
+  "class": "product-grid-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "More to discover"
+    },
+    {
+      "type": "header",
+      "content": "t:general.products"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:labels.collection",
+      "info": "t:info.carousel_collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "label": "t:labels.products_to_show",
+      "min": 2,
+      "max": 24,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "t:labels.columns_desktop",
+      "min": 3,
+      "max": 5,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "row_gap",
+      "label": "t:labels.row_gap",
+      "min": 16,
+      "max": 48,
+      "step": 4,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "t:general.promo_tile"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_promo",
+      "label": "t:labels.show_promo",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "promo_heading",
+      "label": "t:labels.heading",
+      "default": "Your Spanish favorites are waiting"
+    },
+    {
+      "type": "text",
+      "id": "promo_text",
+      "label": "t:labels.text",
+      "default": "Lorem ipsum dolor sit amet consectetur. Velit est sit."
+    },
+    {
+      "type": "text",
+      "id": "promo_button_label",
+      "label": "t:labels.button_label",
+      "default": "View more"
+    },
+    {
+      "type": "url",
+      "id": "promo_button_link",
+      "label": "t:labels.button_link",
+      "info": "t:info.view_all_link"
+    },
+    {
+      "type": "color",
+      "id": "promo_background",
+      "label": "t:labels.background",
+      "default": "#BE1621"
+    },
+    {
+      "type": "color",
+      "id": "promo_text_color",
+      "label": "t:labels.text_color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "promo_button_background",
+      "label": "t:labels.button_background",
+      "default": "#E9E3D1"
+    },
+    {
+      "type": "color",
+      "id": "promo_button_text",
+      "label": "t:labels.button_text_color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "t:general.buttons"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:labels.button_label",
+      "default": "Explore all products"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:labels.button_link",
+      "info": "t:info.view_all_link"
+    },
+    {
+      "type": "header",
+      "content": "t:general.product_card"
+    },
+    {
+      "type": "select",
+      "id": "badge_source",
+      "label": "t:labels.badge_source",
+      "options": [
+        { "value": "type", "label": "t:options.badge_source.type" },
+        { "value": "vendor", "label": "t:options.badge_source.vendor" },
+        { "value": "none", "label": "t:options.badge_source.none" }
+      ],
+      "default": "type"
+    },
+    {
+      "type": "text",
+      "id": "tax_note",
+      "label": "t:labels.tax_note",
+      "default": "VAT included. Free shipping."
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_add_button",
+      "label": "t:labels.mobile_add_button",
+      "info": "t:info.mobile_add_button",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "label": "t:labels.show_rating",
+      "info": "t:info.product_rating",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.product_grid"
+    }
+  ]
+}
+{% endschema %}

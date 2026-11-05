@@ -1,0 +1,499 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "hero": {
+      "type": "hero",
+      "settings": {
+        "overlay_opacity": 95,
+        "height": 510,
+        "height_mobile": 600,
+        "content_position": "bottom",
+        "text_color": "#FFFFFF",
+        "show_rating": true,
+        "rating": 5,
+        "rating_text": "208 reviews",
+        "rating_link": "",
+        "star_color": "#BE1621",
+        "heading": "A taste of Spain,\nstraight to your table",
+        "heading_tag": "h1",
+        "uppercase_heading": true,
+        "text": "<p>Discover authentic Spanish flavors for every moment and special occasions.</p>",
+        "button_label_1": "Shop best sellers",
+        "button_link_1": "shopify://collections/all",
+        "button_label_2": "Build your pack",
+        "button_link_2": "",
+        "layout": "full",
+        "text_size": "large"
+      }
+    },
+    "features": {
+      "type": "features-bar",
+      "blocks": {
+        "feature_shipping": {
+          "type": "feature",
+          "settings": {
+            "icon": "truck",
+            "title": "Free shipping",
+            "text": "<p>Across Canada on orders over CAD $300</p>"
+          }
+        },
+        "feature_chilled": {
+          "type": "feature",
+          "settings": {
+            "icon": "snowflake",
+            "title": "Carefully chilled",
+            "text": "<p>Thermal packaging for sensitive products</p>"
+          }
+        },
+        "feature_spain": {
+          "type": "feature",
+          "settings": {
+            "icon": "globe",
+            "title": "From Spain",
+            "text": "<p>Authentic Spanish products</p>"
+          }
+        },
+        "feature_payment": {
+          "type": "feature",
+          "settings": {
+            "icon": "lock",
+            "title": "Secure payment",
+            "text": "<p>Different payment methods</p>"
+          }
+        }
+      },
+      "block_order": [
+        "feature_shipping",
+        "feature_chilled",
+        "feature_spain",
+        "feature_payment"
+      ],
+      "settings": {
+        "background": "#FAF8F1",
+        "icon_color": "#BE1621"
+      }
+    },
+    "categories": {
+      "type": "category-cards",
+      "blocks": {
+        "category_1": {
+          "type": "category",
+          "settings": {
+            "title": "Charcuterie"
+          }
+        },
+        "category_2": {
+          "type": "category",
+          "settings": {
+            "title": "Seafood"
+          }
+        },
+        "category_3": {
+          "type": "category",
+          "settings": {
+            "title": "Cheese"
+          }
+        },
+        "category_4": {
+          "type": "category",
+          "settings": {
+            "title": "Paella"
+          }
+        },
+        "category_5": {
+          "type": "category",
+          "settings": {
+            "title": "Snacks & Desserts"
+          }
+        },
+        "category_6": {
+          "type": "category",
+          "settings": {
+            "title": "Gift & Sets"
+          }
+        },
+        "category_7": {
+          "type": "category",
+          "settings": {
+            "title": "Snacks & Desserts"
+          }
+        }
+      },
+      "block_order": [
+        "category_1",
+        "category_2",
+        "category_3",
+        "category_4",
+        "category_5",
+        "category_6",
+        "category_7"
+      ],
+      "settings": {
+        "columns": 7,
+        "overlay_opacity": 40,
+        "text_color": "#FFF9E4"
+      }
+    },
+    "best_sellers": {
+      "type": "product-carousel",
+      "settings": {
+        "heading": "Best sellers",
+        "view_all_label": "View all",
+        "view_all_link": "",
+        "products_to_show": 8,
+        "columns": 4,
+        "show_arrows": true,
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true
+      }
+    },
+    "community_videos": {
+      "type": "video-gallery",
+      "blocks": {
+        "video_1": {
+          "type": "video",
+          "settings": {
+            "title": "Cooking paella at home"
+          }
+        },
+        "video_2": {
+          "type": "video",
+          "settings": {
+            "title": "Tapas with friends"
+          }
+        },
+        "video_3": {
+          "type": "video",
+          "settings": {
+            "title": "Sardines on toast"
+          }
+        },
+        "video_4": {
+          "type": "video",
+          "settings": {
+            "title": "Sharing jamón and cheese"
+          }
+        }
+      },
+      "block_order": [
+        "video_1",
+        "video_2",
+        "video_3",
+        "video_4"
+      ],
+      "settings": {
+        "heading": "Spanish flavors, real moments.",
+        "subheading": "See what our community brings to the table.",
+        "columns": 4,
+        "show_arrows": true
+      }
+    },
+    "build_your_pack": {
+      "type": "pack-builder",
+      "blocks": {
+        "tier_3": {
+          "type": "tier",
+          "settings": {
+            "quantity": 3,
+            "discount": 5,
+            "discount_code": ""
+          }
+        },
+        "tier_5": {
+          "type": "tier",
+          "settings": {
+            "quantity": 5,
+            "discount": 10,
+            "discount_code": ""
+          }
+        },
+        "tier_8": {
+          "type": "tier",
+          "settings": {
+            "quantity": 8,
+            "discount": 15,
+            "discount_code": ""
+          }
+        },
+        "tier_10": {
+          "type": "tier",
+          "settings": {
+            "quantity": 10,
+            "discount": 20,
+            "discount_code": ""
+          }
+        }
+      },
+      "block_order": [
+        "tier_3",
+        "tier_5",
+        "tier_8",
+        "tier_10"
+      ],
+      "settings": {
+        "heading": "Your favorites, one better price.",
+        "subheading": "Mix your Spanish favorites and save when you build a pack.",
+        "products_to_show": 8,
+        "default_tier": 2,
+        "summary_heading": "Your pack",
+        "note": ""
+      }
+    },
+    "cheese_banner": {
+      "type": "hero",
+      "settings": {
+        "layout": "contained",
+        "overlay_opacity": 75,
+        "height": 440,
+        "height_mobile": 500,
+        "content_position": "bottom",
+        "text_color": "#FFFFFF",
+        "show_rating": false,
+        "rating": 5,
+        "rating_text": "",
+        "rating_link": "",
+        "star_color": "#BE1621",
+        "heading": "Discover your next favorite cheese",
+        "heading_tag": "h2",
+        "uppercase_heading": false,
+        "text": "<p>Lorem ipsum dolor sit amet consectetur. Velit est sit.</p>",
+        "button_label_1": "Shop cheese",
+        "button_link_1": "",
+        "button_label_2": "",
+        "button_link_2": "",
+        "text_size": "large",
+        "default_image": "cheese",
+        "mobile_full_width": true
+      }
+    },
+    "more_to_discover": {
+      "type": "product-grid",
+      "settings": {
+        "heading": "More to discover",
+        "products_to_show": 8,
+        "columns": 4,
+        "button_label": "Explore all products",
+        "button_link": "",
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true
+      }
+    },
+    "charcuterie_banner": {
+      "type": "image-with-text",
+      "settings": {
+        "image_position": "left",
+        "height": 430,
+        "heading": "Discover the art of\nSpanish charcuterie.",
+        "text": "",
+        "button_label": "Explore charcuterie",
+        "button_link": "",
+        "background": "#FAF8F1",
+        "text_color": "#000000",
+        "show_pattern": true
+      }
+    },
+    "seafood": {
+      "type": "product-carousel",
+      "settings": {
+        "heading": "Seafood",
+        "view_all_label": "View all",
+        "view_all_link": "",
+        "products_to_show": 8,
+        "columns": 4,
+        "show_arrows": true,
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true
+      }
+    },
+    "shop_collage": {
+      "type": "collage",
+      "blocks": {
+        "tile_pantry": {
+          "type": "tile",
+          "settings": {
+            "heading": "Pantry",
+            "text": "Our finest selection of Spanish groceries",
+            "button_label": "Shop pantry",
+            "button_link": ""
+          }
+        },
+        "tile_snacks": {
+          "type": "tile",
+          "settings": {
+            "heading": "Snacks",
+            "text": "Lorem ipsum dolor sit amet",
+            "button_label": "Shop snacks",
+            "button_link": ""
+          }
+        },
+        "tile_beverages": {
+          "type": "tile",
+          "settings": {
+            "heading": "Beverages",
+            "text": "Lorem ipsum dolor sit amet",
+            "button_label": "Shop beverages",
+            "button_link": ""
+          }
+        }
+      },
+      "block_order": [
+        "tile_pantry",
+        "tile_snacks",
+        "tile_beverages"
+      ],
+      "settings": {
+        "height": 490,
+        "overlay_opacity": 60
+      }
+    },
+    "paella_banner": {
+      "type": "promo-banner",
+      "settings": {
+        "height": 275,
+        "content_position": "right",
+        "overlay_opacity": 0,
+        "heading": "Bring everyone together over paella",
+        "uppercase_heading": true,
+        "text": "Find the essentials for your next gathering.",
+        "button_label": "Shop paella",
+        "button_link": "",
+        "background": "#E9D8C3",
+        "text_color": "#000000",
+        "width": "contained",
+        "offset": 0,
+        "height_mobile": 330,
+        "default_image": "paella"
+      }
+    },
+    "charcuterie": {
+      "type": "product-carousel",
+      "settings": {
+        "heading": "Charcuterie",
+        "view_all_label": "View all",
+        "view_all_link": "",
+        "products_to_show": 8,
+        "columns": 4,
+        "show_arrows": true,
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true
+      }
+    },
+    "testimonials": {
+      "type": "testimonials",
+      "blocks": {
+        "testimonial_1": {
+          "type": "testimonial",
+          "settings": {
+            "name": "Ariadne Diaz",
+            "date": "30/09/26",
+            "text": "<p>Lorem ipsum dolor sit amet consectetur. Rhoncus fames dolor sagittis vel sem sagittis euismod quis aenean. Quis enim diam nisi est nulla mauris in volutpat vitae. Urna nisl leo nam morbi fermentum. Quis ultrices diam id platea a.</p><p>Sapien donec posuere scelerisque sit viverra turpis. Nec ac cursus eu ipsum.</p>"
+          }
+        },
+        "testimonial_2": {
+          "type": "testimonial",
+          "settings": {
+            "name": "Ariadne Diaz",
+            "date": "30/09/26",
+            "text": "<p>Lorem ipsum dolor sit amet consectetur. Rhoncus fames dolor sagittis vel sem sagittis euismod quis aenean. Quis enim diam nisi est nulla mauris in volutpat vitae. Urna nisl leo nam morbi fermentum. Quis ultrices diam id platea a.</p><p>Sapien donec posuere scelerisque sit viverra turpis. Nec ac cursus eu ipsum.</p>"
+          }
+        },
+        "testimonial_3": {
+          "type": "testimonial",
+          "settings": {
+            "name": "Ariadne Diaz",
+            "date": "30/09/26",
+            "text": "<p>Lorem ipsum dolor sit amet consectetur. Rhoncus fames dolor sagittis vel sem sagittis euismod quis aenean. Quis enim diam nisi est nulla mauris in volutpat vitae. Urna nisl leo nam morbi fermentum. Quis ultrices diam id platea a.</p><p>Sapien donec posuere scelerisque sit viverra turpis. Nec ac cursus eu ipsum.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "testimonial_1",
+        "testimonial_2",
+        "testimonial_3"
+      ],
+      "settings": {
+        "label": "Customer testimonials",
+        "background": "#FAF8F1",
+        "show_pattern": true
+      }
+    },
+    "recipes": {
+      "type": "blog-posts",
+      "settings": {
+        "heading": "Recipes",
+        "articles_to_show": 4,
+        "columns": 4,
+        "show_category": true,
+        "show_date": true,
+        "read_more_label": "Read More",
+        "button_label": "View more",
+        "button_link": ""
+      }
+    },
+    "gifts_banner": {
+      "type": "promo-banner",
+      "settings": {
+        "width": "full",
+        "height": 265,
+        "content_position": "center",
+        "offset": 6,
+        "overlay_opacity": 0,
+        "heading": "Give a taste of Spain",
+        "uppercase_heading": true,
+        "text": "Explore Spanish flavors across every category.",
+        "button_label": "Shop gifts & sets",
+        "button_link": "",
+        "background": "#EFE2D0",
+        "text_color": "#000000",
+        "height_mobile": 340
+      }
+    },
+    "ham_day": {
+      "type": "countdown-bar",
+      "settings": {
+        "mode": "daily",
+        "heading": "Today is Ham Day",
+        "subheading": "September 28",
+        "end_date": "",
+        "end_time": "23:59",
+        "when_expired": "hide",
+        "badge_label": "-15% + GIFT",
+        "badge_link": "",
+        "background": "#000000",
+        "text_color": "#FFFFFF",
+        "show_pattern": true
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "features",
+    "categories",
+    "best_sellers",
+    "community_videos",
+    "build_your_pack",
+    "cheese_banner",
+    "more_to_discover",
+    "charcuterie_banner",
+    "seafood",
+    "shop_collage",
+    "paella_banner",
+    "charcuterie",
+    "testimonials",
+    "recipes",
+    "gifts_banner",
+    "ham_day"
+  ]
+}

@@ -1,0 +1,412 @@
+{% comment %}
+  Banner promocional dentro del contenedor: imagen de fondo con el texto centrado en una mitad
+  (p. ej. "Bring everyone together over paella", con la comida a la izquierda y el texto a la derecha
+  sobre la parte lisa de la foto).
+  - Desktop: imagen de fondo + columna de texto en la mitad derecha o izquierda.
+  - Móvil (diseño del usuario): a todo el ancho, con el texto centrado encima de la imagen
+    (alto: ajuste "Mobile height"). Título de 29 px, texto fino de 22 px, botón de 232×46 con texto de 20 px.
+    Con la foto por defecto se encuadra al 35 % para que la comida solo asome por la izquierda.
+  - Ancho "full": a todo el ancho de la pantalla (p. ej. "Give a taste of Spain").
+  - "Horizontal offset" desplaza el texto centrado hacia un lado (en % del ancho).
+  Sin imagen se usa assets/promo-banner-default.jpg.
+{% endcomment %}
+
+{%- liquid
+  assign image = section.settings.image
+  assign image_style = image.presentation.focal_point | default: '0% 50%' | prepend: 'object-position: '
+-%}
+
+<div
+  class="promo-banner full-width promo-banner--{{ section.settings.content_position }} promo-banner--{{ section.settings.width }}"
+  style="--promo-height: {{ section.settings.height | divided_by: 16.0 }}rem; --promo-height-mobile: {{ section.settings.height_mobile | divided_by: 16.0 }}rem; --promo-offset: {{ section.settings.offset }}%; --promo-bg: {{ section.settings.background }}; --promo-fg: {{ section.settings.text_color }}; --promo-overlay: {{ section.settings.overlay_opacity | divided_by: 100.0 }};"
+>
+  <div class="promo-banner__media">
+    {%- if image != blank -%}
+      {{
+        image
+        | image_url: width: 2400
+        | image_tag:
+          class: 'promo-banner__image',
+          alt: image.alt,
+          loading: 'lazy',
+          widths: '600, 900, 1200, 1800, 2400',
+          sizes: '(min-width: 990px) min(1152px, 100vw), 100vw',
+          style: image_style
+      }}
+    {%- else -%}
+      {%- comment -%} Sin imagen: la foto por defecto elegida en el ajuste (tabla general o la de paella) {%- endcomment -%}
+      {%- liquid
+        assign default_image_name = 'promo-banner-default.jpg'
+        if section.settings.default_image == 'paella'
+          assign default_image_name = 'paella-banner-default.jpg'
+        endif
+        assign default_image_url = default_image_name | asset_url
+      -%}
+      <img
+        class="promo-banner__image promo-banner__image--default-{{ section.settings.default_image | default: 'board' }}"
+        src="{{ default_image_url }}"
+        srcset="{%- render 'asset-srcset', url: default_image_url, max: 2000 -%}"
+        sizes="(min-width: 990px) 1152px, 160vw"
+        alt=""
+        width="2000"
+        height="667"
+        loading="lazy"
+      >
+    {%- endif -%}
+  </div>
+
+  <div class="promo-banner__content">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="promo-banner__heading{% if section.settings.uppercase_heading %} promo-banner__heading--uppercase{% endif %}">
+        {{- section.settings.heading | escape -}}
+      </h2>
+    {%- endif -%}
+    {%- if section.settings.text != blank -%}
+      <p class="promo-banner__text">{{ section.settings.text | escape }}</p>
+    {%- endif -%}
+    {%- if section.settings.button_label != blank -%}
+      <a
+        {% if section.settings.button_link != blank %}
+          href="{{ section.settings.button_link }}"
+        {% else %}
+          role="link" aria-disabled="true"
+        {% endif %}
+        class="button button--primary promo-banner__button"
+      >
+        {{- section.settings.button_label | escape -}}
+      </a>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .promo-banner {
+    position: relative;
+    display: grid;
+    justify-self: center;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-block: 2.5rem;
+    overflow: hidden;
+    background-color: var(--promo-bg);
+    color: var(--promo-fg);
+    isolation: isolate;
+  }
+
+  /* A todo el ancho va pegado a lo que tenga debajo (p. ej. la barra de cuenta atrás) */
+  .promo-banner--full {
+    width: 100%;
+    margin-block-end: 0;
+  }
+
+  .promo-banner__media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+  }
+
+  .promo-banner__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 0% 50%;
+  }
+
+  .promo-banner__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.25rem;
+    text-align: center;
+  }
+
+  .promo-banner__heading {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .promo-banner__heading--uppercase {
+    text-transform: uppercase;
+  }
+
+  .promo-banner__text {
+    margin: 0.5rem 0 0;
+    font-size: 1.0625rem;
+    font-weight: 300;
+    line-height: 1.3;
+  }
+
+  .promo-banner__button {
+    min-height: 2.125rem;
+    margin-block-start: 1.125rem;
+    padding: 0.25rem 2.1875rem;
+    border-radius: 4px;
+    font-size: 1.0625rem;
+  }
+
+  /* Móvil: imagen de fondo a todo el ancho y el texto centrado encima */
+  @media (max-width: 749px) {
+    .promo-banner {
+      align-items: center;
+      width: 100%;
+      min-height: var(--promo-height-mobile);
+    }
+
+    .promo-banner__media {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      aspect-ratio: auto;
+    }
+
+    .promo-banner__media::after {
+      position: absolute;
+      inset: 0;
+      content: '';
+      background-color: rgb(0 0 0 / var(--promo-overlay));
+    }
+
+    /* Foto por defecto (sin estilo propio del punto focal) */
+    .promo-banner__image:not([style]) {
+      object-position: 35% 50%;
+    }
+
+    /* En la foto de paella la tabla ocupa más ancho: se encuadra más a la derecha para que solo asome */
+    .promo-banner__image--default-paella:not([style]) {
+      object-position: 52% 50%;
+    }
+
+    .promo-banner__content {
+      padding: 2.5rem 0.5rem;
+    }
+
+    .promo-banner__heading {
+      max-width: 20.5rem;
+      font-size: 1.8125rem;
+      line-height: 2.1875rem;
+    }
+
+    .promo-banner__text {
+      margin-block-start: 0.25rem;
+      font-size: 1.375rem;
+      line-height: 1.8125rem;
+      text-wrap: wrap;
+    }
+
+    .promo-banner__button {
+      min-width: 14.5rem;
+      min-height: 2.875rem;
+      margin-block-start: 1.375rem;
+      padding-inline: 1.1875rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .promo-banner {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      min-height: var(--promo-height);
+      margin-block: 2.625rem;
+    }
+
+    /* La imagen pasa a ser el fondo de todo el banner */
+    .promo-banner__media {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      aspect-ratio: auto;
+    }
+
+    .promo-banner__media::after {
+      position: absolute;
+      inset: 0;
+      content: '';
+      background-color: rgb(0 0 0 / var(--promo-overlay));
+    }
+
+    .promo-banner--right .promo-banner__content {
+      grid-column: 2;
+      padding: 2rem 4.75rem 2rem 0;
+    }
+
+    .promo-banner--left .promo-banner__content {
+      grid-column: 1;
+      padding: 2rem 0 2rem 4.75rem;
+    }
+
+    .promo-banner--center .promo-banner__content {
+      position: relative;
+      left: var(--promo-offset);
+      grid-column: 1 / -1;
+    }
+
+    /* A todo el ancho de la pantalla */
+    .promo-banner--full {
+      width: 100%;
+      margin-block-end: 0;
+    }
+
+    .promo-banner--full .promo-banner__text {
+      font-size: 1.25rem;
+    }
+
+    .promo-banner--full .promo-banner__button {
+      padding-inline: 1rem;
+    }
+
+    .promo-banner__heading {
+      font-size: 1.4375rem;
+    }
+
+    .promo-banner__text {
+      font-size: 1.375rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.promo_banner",
+  "tag": "section",
+  "class": "promo-banner-section",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:labels.image",
+      "info": "t:info.promo_image"
+    },
+    {
+      "type": "select",
+      "id": "default_image",
+      "label": "t:labels.promo_default_image",
+      "options": [
+        { "value": "board", "label": "t:options.promo_default_image.board" },
+        { "value": "paella", "label": "t:options.promo_default_image.paella" }
+      ],
+      "default": "board"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:labels.hero_layout",
+      "options": [
+        { "value": "contained", "label": "t:options.promo_width.contained" },
+        { "value": "full", "label": "t:options.promo_width.full" }
+      ],
+      "default": "contained"
+    },
+    {
+      "type": "range",
+      "id": "height",
+      "label": "t:labels.height_desktop",
+      "min": 200,
+      "max": 700,
+      "step": 5,
+      "unit": "px",
+      "default": 275
+    },
+    {
+      "type": "range",
+      "id": "height_mobile",
+      "label": "t:labels.height_mobile",
+      "min": 200,
+      "max": 600,
+      "step": 10,
+      "unit": "px",
+      "default": 330
+    },
+    {
+      "type": "select",
+      "id": "content_position",
+      "label": "t:labels.content_position",
+      "options": [
+        { "value": "left", "label": "t:options.alignment.left" },
+        { "value": "center", "label": "t:options.alignment.center" },
+        { "value": "right", "label": "t:options.alignment.right" }
+      ],
+      "default": "right"
+    },
+    {
+      "type": "range",
+      "id": "offset",
+      "label": "t:labels.horizontal_offset",
+      "info": "t:info.horizontal_offset",
+      "min": -25,
+      "max": 25,
+      "step": 1,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:labels.overlay_opacity",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:general.content"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Bring everyone together over paella"
+    },
+    {
+      "type": "checkbox",
+      "id": "uppercase_heading",
+      "label": "t:labels.uppercase_heading",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "text",
+      "label": "t:labels.text",
+      "default": "Find the essentials for your next gathering."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:labels.button_label",
+      "default": "Shop paella"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:labels.button_link"
+    },
+    {
+      "type": "header",
+      "content": "t:general.colors"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "info": "t:info.promo_background",
+      "default": "#E9D8C3"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:labels.text_color",
+      "default": "#000000"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.promo_banner"
+    }
+  ]
+}
+{% endschema %}

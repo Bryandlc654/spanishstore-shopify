@@ -1,0 +1,409 @@
+{% comment %}
+  Barra de cuenta atrás para una promoción (p. ej. "Today is Ham Day").
+  - Texto (título + subtítulo), contador días : horas : minutos : segundos y una etiqueta/botón.
+  - La fecha y hora de fin se escriben en el editor (AAAA-MM-DD y HH:MM) en la zona horaria
+    de la tienda; Liquid añade el desfase horario para que el contador sea igual para todos.
+  - Al terminar: se oculta la barra o se queda en 00 : 00 : 00 : 00 (ajuste).
+  - Modo "Every day": cuenta atrás hasta la hora de fin de cada día (en la zona horaria de la
+    tienda) y vuelve a empezar al día siguiente; no necesita fecha.
+  - Fondo oscuro con el patrón decorativo (versión oscura de pattern-tile.svg).
+{% endcomment %}
+
+{%- liquid
+  assign end_date = section.settings.end_date | strip
+  assign end_time = section.settings.end_time | strip | default: '23:59'
+  comment
+    Desfase horario de la tienda ('-0400' -> '-04:00') para construir una fecha ISO.
+    Nota: se usa el desfase de hoy; si entre hoy y el fin hay cambio de horario, puede variar 1 hora.
+  endcomment
+  assign offset = 'now' | date: '%z'
+  assign offset_hours = offset | slice: 0, 3
+  assign offset_minutes = offset | slice: 3, 2
+  assign end_iso = end_date | append: 'T' | append: end_time | append: ':00' | append: offset_hours | append: ':' | append: offset_minutes
+
+  if section.settings.pattern_image != blank
+    assign pattern_url = section.settings.pattern_image | image_url: width: 300
+  elsif section.settings.show_pattern
+    assign pattern_url = 'pattern-tile-dark.svg' | asset_url
+  endif
+-%}
+
+<countdown-bar
+  class="countdown-bar full-width"
+  data-end="{{ end_iso | escape }}"
+  data-expired="{{ section.settings.when_expired }}"
+  data-mode="{{ section.settings.mode }}"
+  data-time="{{ end_time | escape }}"
+  data-offset="{{ offset_hours }}:{{ offset_minutes }}"
+  style="--countdown-bg: {{ section.settings.background }}; --countdown-fg: {{ section.settings.text_color }};{% if pattern_url %} --countdown-pattern: url('{{ pattern_url }}');{% endif %}"
+  {% if end_date == blank and section.settings.mode != 'daily' and request.design_mode == false %}
+    hidden
+  {% endif %}
+>
+  <div class="countdown-bar__inner">
+    <div class="countdown-bar__text">
+      {%- if section.settings.heading != blank -%}
+        <p class="countdown-bar__heading">{{ section.settings.heading | escape }}</p>
+      {%- endif -%}
+      {%- if section.settings.subheading != blank -%}
+        <p class="countdown-bar__subheading">{{ section.settings.subheading | escape }}</p>
+      {%- endif -%}
+    </div>
+
+    <div class="countdown-bar__timer" role="timer" aria-live="off" aria-label="{{ 'countdown.label' | t }}">
+      <div class="countdown-bar__unit">
+        <span class="countdown-bar__value" data-countdown="days">00</span>
+        <span class="countdown-bar__label">{{ 'countdown.days' | t }}</span>
+      </div>
+      <span class="countdown-bar__separator" aria-hidden="true">:</span>
+      <div class="countdown-bar__unit">
+        <span class="countdown-bar__value" data-countdown="hours">00</span>
+        <span class="countdown-bar__label">{{ 'countdown.hours' | t }}</span>
+      </div>
+      <span class="countdown-bar__separator" aria-hidden="true">:</span>
+      <div class="countdown-bar__unit">
+        <span class="countdown-bar__value" data-countdown="minutes">00</span>
+        <span class="countdown-bar__label">{{ 'countdown.minutes' | t }}</span>
+      </div>
+      <span class="countdown-bar__separator" aria-hidden="true">:</span>
+      <div class="countdown-bar__unit">
+        <span class="countdown-bar__value" data-countdown="seconds">00</span>
+        <span class="countdown-bar__label">{{ 'countdown.seconds' | t }}</span>
+      </div>
+    </div>
+
+    {%- if section.settings.badge_label != blank -%}
+      {%- if section.settings.badge_link != blank -%}
+        <a href="{{ section.settings.badge_link }}" class="countdown-bar__badge">{{ section.settings.badge_label | escape }}</a>
+      {%- else -%}
+        <span class="countdown-bar__badge">{{ section.settings.badge_label | escape }}</span>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+</countdown-bar>
+
+{% stylesheet %}
+  .countdown-bar {
+    display: block;
+    background-color: var(--countdown-bg);
+    background-image: var(--countdown-pattern, none);
+    background-repeat: repeat;
+    background-size: 3.875rem;
+    color: var(--countdown-fg);
+  }
+
+  .countdown-bar[hidden] {
+    display: none;
+  }
+
+  .countdown-bar__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1.5rem;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    min-height: 4.5rem;
+    margin-inline: auto;
+    padding-block: 0.75rem;
+  }
+
+  .countdown-bar__text {
+    text-align: center;
+  }
+
+  .countdown-bar__heading {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .countdown-bar__subheading {
+    margin: 0.125rem 0 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .countdown-bar__timer {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.1875rem;
+  }
+
+  .countdown-bar__unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 1.75rem;
+  }
+
+  .countdown-bar__value,
+  .countdown-bar__separator {
+    font-size: 1.375rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .countdown-bar__label {
+    margin-block-start: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1;
+  }
+
+  .countdown-bar__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.625rem;
+    padding: 0.25rem 0.5625rem;
+    border-radius: 2px;
+    background-color: #fff;
+    color: #000;
+    font-size: 0.9375rem;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  a.countdown-bar__badge:hover {
+    background-color: #f2f2f2;
+  }
+
+  /* Móvil (diseño del usuario): todo apilado y centrado. Título de 21 px, fecha de 14 px, cifras de 27 px,
+     etiquetas de 12 px y botón blanco de 34 px de alto */
+  @media (max-width: 749px) {
+    .countdown-bar__inner {
+      flex-direction: column;
+      gap: 0;
+      padding-block: 2.8125rem 2.3125rem;
+    }
+
+    .countdown-bar__heading {
+      font-size: 1.3125rem;
+    }
+
+    .countdown-bar__subheading {
+      font-size: 0.9375rem;
+    }
+
+    .countdown-bar__timer {
+      gap: 0.3125rem;
+      margin-block-start: 0.75rem;
+    }
+
+    .countdown-bar__unit {
+      min-width: 2.375rem;
+    }
+
+    .countdown-bar__value,
+    .countdown-bar__separator {
+      font-size: 1.6875rem;
+    }
+
+    .countdown-bar__label {
+      margin-block-start: 0.3125rem;
+      font-size: 0.875rem;
+    }
+
+    .countdown-bar__badge {
+      min-height: 2.125rem;
+      margin-block-start: 1.5rem;
+      padding-inline: 0.625rem;
+      border-radius: 3px;
+      font-size: 0.9375rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .countdown-bar__inner {
+      flex-wrap: nowrap;
+      gap: 0;
+      padding-block: 0.5rem;
+    }
+
+    .countdown-bar__text {
+      margin-inline-end: 1.8125rem;
+      text-align: left;
+    }
+
+    .countdown-bar__badge {
+      margin-inline-start: 3.25rem;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class CountdownBar extends HTMLElement {
+    connectedCallback() {
+      this.end = this.dataset.mode === 'daily' ? this.nextDailyEnd() : Date.parse(this.dataset.end || '');
+      if (Number.isNaN(this.end)) {
+        // Fecha vacía o mal escrita: en la tienda no se muestra; en el editor se ve con 00
+        if (!window.Shopify?.designMode) this.hidden = true;
+        return;
+      }
+      this.values = {};
+      this.querySelectorAll('[data-countdown]').forEach((el) => {
+        this.values[el.dataset.countdown] = el;
+      });
+      this.tick();
+      this.timer = setInterval(() => this.tick(), 1000);
+    }
+
+    disconnectedCallback() {
+      clearInterval(this.timer);
+    }
+
+    // Próxima hora de fin (HH:MM en la zona horaria de la tienda): hoy o, si ya pasó, mañana
+    nextDailyEnd() {
+      const time = /^(\d{1,2}):(\d{2})$/.exec(this.dataset.time || '23:59');
+      const offset = /^([+-])(\d{2}):(\d{2})$/.exec(this.dataset.offset || '+00:00');
+      if (!time || !offset) return NaN;
+      const offsetMs = (offset[1] === '-' ? -1 : 1) * (Number(offset[2]) * 60 + Number(offset[3])) * 60000;
+      const storeNow = new Date(Date.now() + offsetMs);
+      let end =
+        Date.UTC(storeNow.getUTCFullYear(), storeNow.getUTCMonth(), storeNow.getUTCDate(), Number(time[1]), Number(time[2])) -
+        offsetMs;
+      if (end <= Date.now()) end += 86400000;
+      return end;
+    }
+
+    tick() {
+      const remaining = Math.max(0, this.end - Date.now());
+      const total = Math.floor(remaining / 1000);
+      const parts = {
+        days: Math.floor(total / 86400),
+        hours: Math.floor((total % 86400) / 3600),
+        minutes: Math.floor((total % 3600) / 60),
+        seconds: total % 60,
+      };
+      Object.entries(parts).forEach(([unit, value]) => {
+        if (this.values[unit]) this.values[unit].textContent = String(value).padStart(2, '0');
+      });
+
+      if (remaining === 0 && this.dataset.mode === 'daily') {
+        this.end = this.nextDailyEnd();
+        return;
+      }
+
+      if (remaining === 0) {
+        clearInterval(this.timer);
+        if (this.dataset.expired === 'hide' && !window.Shopify?.designMode) this.hidden = true;
+      }
+    }
+  }
+
+  if (!customElements.get('countdown-bar')) {
+    customElements.define('countdown-bar', CountdownBar);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:general.countdown_bar",
+  "tag": "section",
+  "class": "countdown-bar-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Today is Ham Day"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "t:labels.subheading",
+      "default": "September 28"
+    },
+    {
+      "type": "header",
+      "content": "t:general.countdown"
+    },
+    {
+      "type": "select",
+      "id": "mode",
+      "label": "t:labels.countdown_mode",
+      "options": [
+        { "value": "date", "label": "t:options.countdown_mode.date" },
+        { "value": "daily", "label": "t:options.countdown_mode.daily" }
+      ],
+      "default": "date"
+    },
+    {
+      "type": "text",
+      "id": "end_date",
+      "label": "t:labels.end_date",
+      "info": "t:info.end_date",
+      "placeholder": "2026-09-28"
+    },
+    {
+      "type": "text",
+      "id": "end_time",
+      "label": "t:labels.end_time",
+      "info": "t:info.end_time",
+      "default": "23:59"
+    },
+    {
+      "type": "select",
+      "id": "when_expired",
+      "label": "t:labels.when_expired",
+      "options": [
+        { "value": "hide", "label": "t:options.when_expired.hide" },
+        { "value": "zero", "label": "t:options.when_expired.zero" }
+      ],
+      "default": "hide"
+    },
+    {
+      "type": "header",
+      "content": "t:general.badge"
+    },
+    {
+      "type": "text",
+      "id": "badge_label",
+      "label": "t:labels.text",
+      "default": "-15% + GIFT"
+    },
+    {
+      "type": "url",
+      "id": "badge_link",
+      "label": "t:labels.link"
+    },
+    {
+      "type": "header",
+      "content": "t:general.colors"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:labels.text_color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_pattern",
+      "label": "t:labels.show_pattern",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "pattern_image",
+      "label": "t:labels.pattern_image",
+      "info": "t:info.pattern_image"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.countdown_bar"
+    }
+  ]
+}
+{% endschema %}

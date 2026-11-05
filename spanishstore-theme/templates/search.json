@@ -1,0 +1,92 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-collection",
+      "blocks": {
+        "category_1": {
+          "type": "category",
+          "settings": {
+            "title": "Charcuterie"
+          }
+        },
+        "category_2": {
+          "type": "category",
+          "settings": {
+            "title": "Seafood"
+          }
+        },
+        "category_3": {
+          "type": "category",
+          "settings": {
+            "title": "Cheese"
+          }
+        },
+        "category_4": {
+          "type": "category",
+          "settings": {
+            "title": "Paella"
+          }
+        },
+        "category_5": {
+          "type": "category",
+          "settings": {
+            "title": "Snacks & Desserts"
+          }
+        },
+        "category_6": {
+          "type": "category",
+          "settings": {
+            "title": "Gift & Sets"
+          }
+        },
+        "category_7": {
+          "type": "category",
+          "settings": {
+            "title": "Beverages"
+          }
+        },
+        "category_8": {
+          "type": "category",
+          "settings": {
+            "title": "Pantry"
+          }
+        }
+      },
+      "block_order": [
+        "category_1",
+        "category_2",
+        "category_3",
+        "category_4",
+        "category_5",
+        "category_6",
+        "category_7",
+        "category_8"
+      ],
+      "settings": {
+        "products_per_page": 24,
+        "show_categories": true,
+        "show_search": true,
+        "badge_source": "type",
+        "tax_note": "VAT included. Free shipping.",
+        "show_rating": true,
+        "top_nav": "auto",
+        "subcategory_filter": "filter.p.m.custom.subcategory",
+        "banner_mode": "categories",
+        "banner_height": 285,
+        "banner_overlay": 45
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

@@ -1,0 +1,347 @@
+{% comment %}
+  Collage de categorías: hasta 3 tarjetas con imagen de fondo, degradado oscuro abajo,
+  titular, texto y botón (p. ej. Pantry / Snacks / Beverages).
+  - Desktop: la primera tarjeta ocupa la columna izquierda entera y las otras dos se apilan
+    a la derecha. Con 2 tarjetas, dos columnas iguales; con 1, a todo el ancho.
+  - Móvil: tarjetas una debajo de otra.
+  Sin imagen, las 3 primeras tarjetas usan las fotos del usuario (assets/collage-default-1…3.jpg:
+  despensa española, patatas Torres, conservas); las demás, un placeholder.
+{% endcomment %}
+
+<div
+  class="collage full-width collage--{{ section.blocks.size }}"
+  style="--collage-height: {{ section.settings.height | divided_by: 16.0 }}rem; --collage-overlay: {{ section.settings.overlay_opacity | divided_by: 100.0 }};"
+>
+  {%- for block in section.blocks -%}
+    {%- assign image = block.settings.image -%}
+    <div class="collage__item" {{ block.shopify_attributes }}>
+      {%- if image != blank -%}
+        {%- assign image_style = image.presentation.focal_point | default: '50% 50%' | prepend: 'object-position: ' -%}
+        {{
+          image
+          | image_url: width: 1600
+          | image_tag:
+            class: 'collage__image',
+            alt: image.alt,
+            loading: 'lazy',
+            widths: '375, 600, 900, 1200, 1600',
+            sizes: '(min-width: 750px) 50vw, 100vw',
+            style: image_style
+        }}
+      {%- elsif forloop.index <= 3 -%}
+        {%- liquid
+          assign default_src = 'collage-default-' | append: forloop.index | append: '.jpg' | asset_url
+          case forloop.index
+            when 1
+              assign default_size = '1024x1024'
+              assign default_position = '50% 50%'
+            when 2
+              assign default_size = '735x474'
+              assign default_position = '50% 50%'
+            else
+              assign default_size = '1200x1200'
+              assign default_position = '50% 55%'
+          endcase
+          assign default_dims = default_size | split: 'x'
+        -%}
+        <img
+          class="collage__image"
+          src="{{ default_src }}"
+          srcset="{%- render 'asset-srcset', url: default_src, max: default_dims[0] -%}"
+          sizes="(min-width: 750px) 50vw, 100vw"
+          alt=""
+          width="{{ default_dims[0] }}"
+          height="{{ default_dims[1] }}"
+          loading="lazy"
+          style="object-position: {{ default_position }};"
+        >
+      {%- else -%}
+        {%- assign placeholder = forloop.index0 | modulo: 2 | plus: 1 | prepend: 'collection-' -%}
+        {{ placeholder | placeholder_svg_tag: 'collage__image collage__image--placeholder' }}
+      {%- endif -%}
+
+      <div class="collage__content">
+        {%- if block.settings.heading != blank -%}
+          <h3 class="collage__heading">{{ block.settings.heading | escape }}</h3>
+        {%- endif -%}
+        {%- if block.settings.text != blank -%}
+          <p class="collage__text">{{ block.settings.text | escape }}</p>
+        {%- endif -%}
+        {%- if block.settings.button_label != blank -%}
+          <a
+            {% if block.settings.button_link != blank %}
+              href="{{ block.settings.button_link }}"
+            {% else %}
+              role="link" aria-disabled="true"
+            {% endif %}
+            class="button button--primary collage__button"
+          >
+            {{- block.settings.button_label | escape -}}
+          </a>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endfor -%}
+</div>
+
+{% stylesheet %}
+  .collage {
+    display: grid;
+    gap: 0.75rem;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin: 2.5rem auto;
+  }
+
+  /* El grid de .shopify-section limita el ancho; la colocamos centrada en todo el ancho */
+  .collage.full-width {
+    justify-self: center;
+  }
+
+  .collage__item {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 15rem;
+    overflow: hidden;
+    border-radius: 5px;
+    background-color: #2b2b2b;
+    color: #fff;
+    isolation: isolate;
+  }
+
+  .collage__item:first-child {
+    min-height: 20rem;
+  }
+
+  .collage__image {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .collage__image--placeholder {
+    fill: #666;
+    background-color: #444;
+  }
+
+  .collage__item:hover .collage__image {
+    transform: scale(1.04);
+  }
+
+  /* Degradado oscuro de abajo hacia arriba para que el texto se lea */
+  .collage__item::after {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: '';
+    background: linear-gradient(
+      0deg,
+      rgb(0 0 0 / var(--collage-overlay)) 0%,
+      rgb(0 0 0 / calc(var(--collage-overlay) * 0.6)) 35%,
+      rgb(0 0 0 / calc(var(--collage-overlay) * 0.15)) 70%,
+      rgb(0 0 0 / 0) 100%
+    );
+  }
+
+  .collage__content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.125rem 1.4375rem;
+  }
+
+  .collage__heading {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .collage__text {
+    margin: 0.125rem 0 0;
+    font-size: 1.0625rem;
+    font-weight: 300;
+    line-height: 1.3;
+  }
+
+  .collage__button {
+    min-width: 9rem;
+    min-height: 2.125rem;
+    margin-block-start: 0.5rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 4px;
+  }
+
+  /* Móvil (diseño del usuario, a 375 px): primera tarjeta alta (638 px) y las otras de 309 px,
+     título de 29 px, texto de 19 px y botón de 189×46 con texto de 20 px */
+  @media (max-width: 749px) {
+    .collage {
+      gap: 1.1875rem;
+    }
+
+    .collage__item {
+      min-height: 19.3125rem;
+    }
+
+    .collage__item:first-child {
+      min-height: 39.875rem;
+    }
+
+    .collage__content {
+      padding: 1.25rem 1.25rem 1.5rem;
+    }
+
+    .collage__heading {
+      font-size: 1.8125rem;
+    }
+
+    .collage__text {
+      margin-block-start: 0.125rem;
+      font-size: 1.1875rem;
+      font-weight: 400;
+      line-height: 1.2;
+      text-wrap: wrap;
+    }
+
+    .collage__button {
+      min-width: 11.8125rem;
+      min-height: 2.875rem;
+      margin-block-start: 0.75rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .collage {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: 0.9375rem;
+      height: var(--collage-height);
+      margin-block: 2.625rem;
+    }
+
+    .collage__item,
+    .collage__item:first-child {
+      min-height: 0;
+    }
+
+    .collage--3 .collage__item:first-child {
+      grid-row: 1 / -1;
+    }
+
+    /* Las tarjetas pequeñas llevan menos margen interior, como en el diseño */
+    .collage--3 .collage__item:not(:first-child) .collage__content {
+      padding: 1rem;
+    }
+
+    .collage--2 .collage__item {
+      grid-row: 1 / -1;
+    }
+
+    .collage--1 .collage__item {
+      grid-column: 1 / -1;
+      grid-row: 1 / -1;
+    }
+
+    .collage__heading {
+      font-size: 1.6875rem;
+    }
+
+    .collage__text {
+      font-size: 1.375rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .collage__image {
+      transition: none;
+    }
+
+    .collage__item:hover .collage__image {
+      transform: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.collage",
+  "tag": "section",
+  "class": "collage-section",
+  "max_blocks": 3,
+  "settings": [
+    {
+      "type": "range",
+      "id": "height",
+      "label": "t:labels.height_desktop",
+      "min": 300,
+      "max": 800,
+      "step": 10,
+      "unit": "px",
+      "default": 490
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:labels.overlay_opacity",
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 60
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tile",
+      "name": "t:general.tile",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:labels.image"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "t:labels.heading",
+          "default": "Pantry"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "t:labels.text",
+          "default": "Our finest selection of Spanish groceries"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "t:labels.button_label",
+          "default": "Shop pantry"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "t:labels.button_link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.collage",
+      "blocks": [
+        { "type": "tile" },
+        { "type": "tile", "settings": { "heading": "Snacks", "text": "Lorem ipsum dolor sit amet", "button_label": "Shop snacks" } },
+        { "type": "tile", "settings": { "heading": "Beverages", "text": "Lorem ipsum dolor sit amet", "button_label": "Shop beverages" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

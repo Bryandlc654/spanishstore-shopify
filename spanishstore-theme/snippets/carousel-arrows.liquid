@@ -1,0 +1,238 @@
+{% doc %}
+  Flechas y lógica compartida de los carruseles horizontales (productos, vídeos…).
+
+  Estructura que espera:
+    <carousel-slider class="carousel" style="--carousel-columns: 4;">
+      <ul class="carousel__track" data-carousel-track> <li class="carousel__slide">…</li> </ul>
+      {% render 'carousel-arrows' %}
+    </carousel-slider>
+
+  Variables CSS que se pueden ajustar en el elemento .carousel:
+  - --carousel-columns: tarjetas visibles en desktop (por defecto 4)
+  - --carousel-peek-mobile / --carousel-peek-tablet: tarjetas visibles en móvil (2.15) y tablet (3.2)
+  - --carousel-media-ratio: alto/ancho de la imagen de la tarjeta, para centrar las flechas (por defecto 1)
+
+  - Móvil/tablet: scroll táctil con snap, llega a los bordes de la pantalla y sin flechas.
+  - Desktop: N tarjetas exactas dentro del contenedor. Flechas a media altura de la imagen,
+    visibles al pasar el ratón. Avanzan una página y se desactivan en los extremos.
+
+  @example
+  {% render 'carousel-arrows' %}
+{% enddoc %}
+
+<button
+  type="button"
+  class="carousel__arrow carousel__arrow--prev"
+  aria-label="{{ 'accessibility.previous' | t }}"
+  data-carousel-prev
+  disabled
+>
+  {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+</button>
+<button
+  type="button"
+  class="carousel__arrow carousel__arrow--next"
+  aria-label="{{ 'accessibility.next' | t }}"
+  data-carousel-next
+>
+  {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+</button>
+
+{% stylesheet %}
+  .carousel {
+    --carousel-columns: 4;
+    --carousel-gap: 0.75rem;
+    --carousel-peek-mobile: 2.15;
+    --carousel-peek-tablet: 3.2;
+    --carousel-media-ratio: 1;
+
+    position: relative;
+    display: block;
+    container-type: inline-size;
+  }
+
+  /* Móvil: carrusel que llega a los bordes de la pantalla */
+  .carousel__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - var(--carousel-gap)) / var(--carousel-peek-mobile));
+    gap: var(--carousel-gap);
+    margin: 0;
+    padding: 0 var(--page-margin);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-behavior: smooth;
+    scroll-padding-inline: var(--page-margin);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    list-style: none;
+  }
+
+  .carousel__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .carousel__slide {
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .carousel__arrow {
+    display: none;
+  }
+
+  @media (min-width: 750px) {
+    .carousel {
+      --carousel-gap: 0.9375rem;
+    }
+
+    .carousel__track {
+      grid-auto-columns: calc((100% - var(--carousel-gap) * 2) / var(--carousel-peek-tablet));
+    }
+  }
+
+  @media (min-width: 990px) {
+    .carousel {
+      width: min(var(--container-width), 100% - var(--page-margin) * 2);
+      margin-inline: auto;
+    }
+
+    .carousel__track {
+      grid-auto-columns: calc((100% - var(--carousel-gap) * (var(--carousel-columns) - 1)) / var(--carousel-columns));
+      padding: 0;
+      scroll-padding-inline: 0;
+    }
+
+    .carousel__arrow {
+      position: absolute;
+      /* Media altura de la imagen: ancho de tarjeta × proporción ÷ 2 */
+      top: calc(
+        (100cqi - var(--carousel-gap) * (var(--carousel-columns) - 1)) / var(--carousel-columns) *
+          var(--carousel-media-ratio) / 2
+      );
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background-color: #fff;
+      color: var(--color-foreground);
+      box-shadow: 0 0.125rem 0.75rem rgb(0 0 0 / 0.15);
+      cursor: pointer;
+      opacity: 0;
+      translate: 0 -50%;
+      transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .carousel__arrow svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .carousel__arrow--prev {
+      left: -1.25rem;
+    }
+
+    .carousel__arrow--prev svg {
+      rotate: 90deg;
+    }
+
+    .carousel__arrow--next {
+      right: -1.25rem;
+    }
+
+    .carousel__arrow--next svg {
+      rotate: -90deg;
+    }
+
+    .carousel:hover .carousel__arrow:not([disabled]),
+    .carousel__arrow:focus-visible {
+      opacity: 1;
+    }
+
+    .carousel__arrow:hover {
+      background-color: var(--color-accent);
+      color: #fff;
+    }
+
+    .carousel__arrow[disabled] {
+      cursor: default;
+      pointer-events: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carousel__track {
+      scroll-behavior: auto;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class CarouselSlider extends HTMLElement {
+    connectedCallback() {
+      this.track = this.querySelector('[data-carousel-track]');
+      this.prev = this.querySelector('[data-carousel-prev]');
+      this.next = this.querySelector('[data-carousel-next]');
+      // Puntos opcionales (snippets/carousel-dots.liquid, solo móvil)
+      this.dots = [...this.querySelectorAll('[data-carousel-dots] [data-index]')];
+      if (!this.track || (!this.prev && !this.dots.length)) return;
+
+      this.prev?.addEventListener('click', () => this.scrollByPage(-1));
+      this.next?.addEventListener('click', () => this.scrollByPage(1));
+      this.dots.forEach((dot) => {
+        dot.addEventListener('click', () => {
+          const slide = this.track.children[Number(dot.dataset.index)];
+          if (slide) this.track.scrollTo({ left: slide.offsetLeft - this.track.firstElementChild.offsetLeft });
+        });
+      });
+      this.track.addEventListener('scroll', () => this.update(), { passive: true });
+      new ResizeObserver(() => this.update()).observe(this.track);
+      this.update();
+    }
+
+    update() {
+      if (this.prev && this.next) this.updateArrows();
+      if (this.dots.length) this.updateDots();
+    }
+
+    // Punto activo: la tarjeta más cercana al borde izquierdo (la última al llegar al final)
+    updateDots() {
+      const slide = this.track.firstElementChild;
+      if (!slide) return;
+      const gap = parseFloat(getComputedStyle(this.track).columnGap) || 0;
+      const maxScroll = this.track.scrollWidth - this.track.clientWidth;
+      let index = Math.round(this.track.scrollLeft / (slide.offsetWidth + gap));
+      if (this.track.scrollLeft >= maxScroll - 2) index = this.dots.length - 1;
+      index = Math.min(index, this.dots.length - 1);
+      this.dots.forEach((dot, i) => {
+        if (i === index) dot.setAttribute('aria-current', 'true');
+        else dot.removeAttribute('aria-current');
+      });
+    }
+
+    // Avanza tantas tarjetas como se ven a la vez
+    scrollByPage(direction) {
+      const slide = this.track.firstElementChild;
+      if (!slide) return;
+      const gap = parseFloat(getComputedStyle(this.track).columnGap) || 0;
+      const step = slide.offsetWidth + gap;
+      const visible = Math.max(1, Math.floor((this.track.clientWidth + gap) / step));
+      this.track.scrollBy({ left: direction * step * visible });
+    }
+
+    updateArrows() {
+      const maxScroll = this.track.scrollWidth - this.track.clientWidth;
+      this.prev.disabled = this.track.scrollLeft <= 1;
+      this.next.disabled = this.track.scrollLeft >= maxScroll - 1;
+    }
+  }
+
+  if (!customElements.get('carousel-slider')) {
+    customElements.define('carousel-slider', CarouselSlider);
+  }
+{% endjavascript %}

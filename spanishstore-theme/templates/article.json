@@ -1,0 +1,28 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-article",
+      "settings": {
+        "show_author": true,
+        "show_share": true,
+        "products_heading": "Shop the ingredients",
+        "tax_note": "VAT included. Free shipping.",
+        "show_more_articles": true,
+        "more_heading": "More from the blog",
+        "read_more_label": "Read More"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

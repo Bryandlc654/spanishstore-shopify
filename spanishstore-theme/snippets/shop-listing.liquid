@@ -1,0 +1,592 @@
+{% doc %}
+  Contenido de la página de tienda / colección / resultados de búsqueda (lo pinta sections/main-collection.liquid
+  dentro de su {% paginate %}). Los estilos y el JavaScript (<collection-filters>) están en esa sección.
+
+  @param {section} section - La sección main-collection (ajustes y bloques de categorías)
+  @param {object} paginate - Paginación
+  @param {object[]} items - Productos de la página (collection.products o search.results)
+  @param {number} products_count - Nº total de productos
+  @param {object[]} filters - Filtros de Shopify (collection.filters o search.filters)
+  @param {object[]} sort_options - Opciones de orden
+  @param {string} sort_by - Orden actual
+  @param {string} form_url - URL del formulario de filtros
+  @param {string} clear_url - URL para quitar los filtros
+  @param {string} listing_title - Título (colección o "Results for …")
+  @param {boolean} is_all - Página de tienda ("all")
+  @param {boolean} is_search - Resultados de búsqueda
+  @param {string} [search_terms] - Texto buscado
+{% enddoc %}
+
+{%- liquid
+  assign collection_title = listing_title
+
+  assign show_banner = false
+  if section.settings.banner_mode == 'always'
+    assign show_banner = true
+  elsif section.settings.banner_mode == 'categories' and is_all == false
+    assign show_banner = true
+  endif
+  if is_search
+    assign show_banner = false
+  endif
+
+  assign nav_mode = section.settings.top_nav
+  if nav_mode == 'auto'
+    if is_all
+      assign nav_mode = 'categories'
+    else
+      assign nav_mode = 'subcategories'
+    endif
+  endif
+
+  assign sub_filter = null
+  for filter in filters
+    if filter.param_name == section.settings.subcategory_filter
+      assign sub_filter = filter
+    endif
+  endfor
+  if is_search == false
+    assign sub_menu = linklists[collection.handle]
+  endif
+
+  comment
+    Título bajo el banner: la subcategoría activa o "All products"
+  endcomment
+  assign list_title = collection_title
+  if show_banner
+    assign list_title = 'collections.all_products' | t
+    if sub_filter.active_values.size == 1
+      assign list_title = sub_filter.active_values.first.label
+    endif
+  endif
+
+  assign active_filters = 0
+  for filter in filters
+    assign active_filters = active_filters | plus: filter.active_values.size
+    if filter.type == 'price_range'
+      if filter.min_value.value != null or filter.max_value.value != null
+        assign active_filters = active_filters | plus: 1
+      endif
+    endif
+  endfor
+-%}
+
+{%- if show_banner -%}
+  {%- liquid
+    assign banner_image = collection.image | default: collection.featured_image
+    assign fallback_images = 'charcuterie,seafood,cheese,paella,snacks-desserts,gift-sets' | split: ','
+    assign handle_for_fallback = collection.handle | replace: 'gifts-sets', 'gift-sets' | replace: 'gifts', 'gift-sets'
+  -%}
+  <div
+    class="collection-banner full-width"
+    style="--collection-banner-height: {{ section.settings.banner_height | divided_by: 16.0 }}rem; --collection-banner-overlay: {{ section.settings.banner_overlay | divided_by: 100.0 }};"
+  >
+    {%- if collection.image != blank -%}
+      {{
+        collection.image
+        | image_url: width: 2400
+        | image_tag: class: 'collection-banner__image', alt: '', widths: '750, 1100, 1500, 1800, 2400', sizes: '100vw', fetchpriority: 'high'
+      }}
+    {%- elsif fallback_images contains handle_for_fallback -%}
+      {%- assign banner_fallback_url = 'category-' | append: handle_for_fallback | append: '.jpg' | asset_url -%}
+      <img
+        class="collection-banner__image"
+        src="{{ banner_fallback_url }}"
+        srcset="{%- render 'asset-srcset', url: banner_fallback_url, max: 640 -%}"
+        sizes="100vw"
+        alt=""
+        width="640"
+        height="360"
+        fetchpriority="high"
+      >
+    {%- elsif banner_image != blank -%}
+      {{
+        banner_image
+        | image_url: width: 2400
+        | image_tag: class: 'collection-banner__image', alt: '', widths: '750, 1100, 1500, 1800, 2400', sizes: '100vw'
+      }}
+    {%- endif -%}
+    <h1 class="collection-banner__title">{{ collection_title | escape }}</h1>
+  </div>
+{%- endif -%}
+
+<collection-filters class="main-collection full-width" data-section-id="{{ section.id }}">
+  <div class="main-collection__layout">
+    <div class="main-collection__head">
+      <nav class="breadcrumb" aria-label="{{ 'collections.breadcrumb' | t }}">
+        <ol role="list">
+          <li><a href="{{ routes.root_url }}">{{ 'collections.home' | t }}</a></li>
+          {%- if is_all == false or is_search -%}
+            <li><a href="{{ routes.all_products_collection_url }}">{{ 'collections.all_products' | t }}</a></li>
+          {%- endif -%}
+          <li><span aria-current="page">{{ collection_title | escape }}</span></li>
+        </ol>
+      </nav>
+      {%- if show_banner -%}
+        <h2 class="main-collection__title" data-collection-title>{{ list_title | escape }}</h2>
+      {%- else -%}
+        <h1 class="main-collection__title">{{ collection_title | escape }}</h1>
+      {%- endif -%}
+      <p class="main-collection__count" data-collection-count>
+        {{- 'collections.products_found' | t: count: products_count -}}
+      </p>
+    </div>
+
+    {%- if nav_mode == 'subcategories' -%}
+      <nav class="subcategories" aria-label="{{ 'collections.subcategories' | t }}" data-subcategories>
+        <ul class="subcategories__list" role="list">
+          {%- if sub_filter != null -%}
+            {%- for value in sub_filter.values -%}
+              {%- if value.count > 0 or value.active -%}
+                <li>
+                  <a
+                    href="{% if value.active %}{{ value.url_to_remove }}{% else %}{{ value.url_to_add }}{% endif %}"
+                    class="subcategories__link{% if value.active %} is-active{% endif %}"
+                    {% if value.active %}
+                      aria-current="true"
+                    {% endif %}
+                    data-filter-link
+                  >
+                    {{- value.label | escape -}}
+                  </a>
+                </li>
+              {%- endif -%}
+            {%- endfor -%}
+          {%- elsif sub_menu.links.size > 0 -%}
+            {%- for link in sub_menu.links -%}
+              <li>
+                <a
+                  href="{{ link.url }}"
+                  class="subcategories__link{% if link.current or link.child_active %} is-active{% endif %}"
+                  {% if link.current %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{- link.title | escape -}}
+                </a>
+              </li>
+            {%- endfor -%}
+          {%- endif -%}
+        </ul>
+      </nav>
+    {%- endif -%}
+
+    {%- if nav_mode == 'categories' and section.settings.show_categories and section.blocks.size > 0 -%}
+      <carousel-slider class="carousel main-collection__categories" style="--carousel-columns: 5.4; --carousel-media-ratio: 0.5625;">
+        <ul class="carousel__track" role="list" data-carousel-track>
+          {%- for block in section.blocks -%}
+            <li class="carousel__slide" {{ block.shopify_attributes }}>
+              {%- render 'category-card',
+                collection: block.settings.collection,
+                title: block.settings.title,
+                image: block.settings.image,
+                index: forloop.index,
+                sizes: '(min-width: 990px) 150px, 40vw'
+              -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+        {%- render 'carousel-arrows' -%}
+      </carousel-slider>
+    {%- endif -%}
+
+    {%- comment -%} Barra lateral de filtros {%- endcomment -%}
+    <aside class="filters" id="Filters-{{ section.id }}" aria-label="{{ 'collections.filters' | t }}" data-filters>
+      <form id="FiltersForm-{{ section.id }}" class="filters__form" action="{{ form_url }}" method="get" data-filters-form>
+        {%- if is_search -%}
+          <input type="hidden" name="q" value="{{ search_terms | escape }}">
+          <input type="hidden" name="type" value="product">
+          <input type="hidden" name="options[prefix]" value="last">
+        {%- endif -%}
+        <div class="filters__header">
+          <h2 class="filters__title">{{ 'collections.filters' | t }}</h2>
+          <a href="{{ clear_url }}" class="filters__clear" data-filters-clear>
+            {{- 'icon-refresh.svg' | inline_asset_content -}}
+            {{ 'collections.clear' | t }}
+          </a>
+          <button type="button" class="filters__close" aria-label="{{ 'collections.close' | t }}" data-filters-close>
+            {{- 'icon-close.svg' | inline_asset_content -}}
+          </button>
+        </div>
+
+        <div class="filters__body" data-filters-body>
+          {%- comment -%} Móvil: filtros activos como chips (al tocarlos se quitan) {%- endcomment -%}
+          {%- liquid
+            assign has_active = false
+            for filter in filters
+              if filter.type == 'price_range'
+                if filter.min_value.value != nil or filter.max_value.value != nil
+                  assign has_active = true
+                endif
+              elsif filter.active_values.size > 0
+                assign has_active = true
+              endif
+            endfor
+          -%}
+          {%- if has_active -%}
+            <ul class="filters__active" role="list">
+              {%- for filter in filters -%}
+                {%- if filter.type == 'price_range' -%}
+                  {%- if filter.min_value.value != nil or filter.max_value.value != nil -%}
+                    {%- liquid
+                      # Valores en céntimos
+                      assign chip_min_value = filter.min_value.value | default: 0 | divided_by: 100.0 | floor
+                      assign chip_max_value = filter.max_value.value | default: filter.range_max | divided_by: 100.0 | ceil
+                    -%}
+                    <li>
+                      <a
+                        href="{{ filter.url_to_remove }}"
+                        class="filters__chip"
+                        data-filter-link
+                        aria-label="{{ 'collections.remove_filter' | t: filter: filter.label }}"
+                      >
+                        {{- cart.currency.symbol }}{{ chip_min_value }} – {{ cart.currency.symbol }}{{ chip_max_value -}}
+                        <span aria-hidden="true">x</span>
+                      </a>
+                    </li>
+                  {%- endif -%}
+                {%- else -%}
+                  {%- for value in filter.active_values -%}
+                    <li>
+                      <a
+                        href="{{ value.url_to_remove }}"
+                        class="filters__chip"
+                        data-filter-link
+                        aria-label="{{ 'collections.remove_filter' | t: filter: value.label }}"
+                      >
+                        {{- value.label | escape -}}
+                        <span aria-hidden="true">x</span>
+                      </a>
+                    </li>
+                  {%- endfor -%}
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+
+          {%- for filter in filters -%}
+            {%- liquid
+              # Móvil: los grupos se pliegan. Abiertos de entrada: precio, disponibilidad, sí/no y los que tienen algo marcado
+              assign group_open = false
+              if filter.type == 'price_range' or filter.type == 'boolean' or filter.param_name contains 'availability'
+                assign group_open = true
+              endif
+              if filter.active_values.size > 0 or filter.min_value.value != nil or filter.max_value.value != nil
+                assign group_open = true
+              endif
+              assign group_id = 'FilterGroup-' | append: section.id | append: '-' | append: forloop.index
+            -%}
+            <fieldset class="filters__group{% if group_open %} is-open{% endif %}" data-filter-group="{{ filter.param_name | handleize }}">
+              <legend class="filters__group-title">
+                <button
+                  type="button"
+                  class="filters__group-toggle"
+                  aria-expanded="{{ group_open }}"
+                  aria-controls="{{ group_id }}"
+                  data-filter-toggle
+                >
+                  <span class="filters__group-label">{{ filter.label | escape }}</span>
+                  {%- if filter.type == 'list' -%}
+                    <span class="filters__group-count">{{ filter.values.size }}</span>
+                  {%- endif -%}
+                  <svg class="filters__group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </legend>
+              <div class="filters__group-content" id="{{ group_id }}">
+
+              {%- case filter.type -%}
+                {%- when 'list', 'boolean' -%}
+                  <ul class="filters__options" role="list">
+                    {%- for value in filter.values -%}
+                      {%- assign input_id = 'Filter-' | append: section.id | append: '-' | append: filter.param_name | append: '-' | append: forloop.index | handleize -%}
+                      <li>
+                        <label class="filter-option" for="{{ input_id }}">
+                          <input
+                            type="checkbox"
+                            id="{{ input_id }}"
+                            class="filter-option__input"
+                            name="{{ value.param_name }}"
+                            value="{{ value.value }}"
+                            {% if value.active %}
+                              checked
+                            {% endif %}
+                            {% if value.count == 0 and value.active == false %}
+                              disabled
+                            {% endif %}
+                          >
+                          <span class="filter-option__box" aria-hidden="true">
+                            {{- 'icon-check.svg' | inline_asset_content -}}
+                          </span>
+                          <span class="filter-option__label">{{ value.label | escape }}</span>
+                          <span class="filter-option__count">({{ value.count }})</span>
+                        </label>
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+
+                {%- when 'price_range' -%}
+                  {%- liquid
+                    assign range_max = filter.range_max | divided_by: 100.0 | ceil
+                    if range_max < 1
+                      assign range_max = 1
+                    endif
+                    # Shopify devuelve el valor del filtro de precio en céntimos
+                    assign current_min = 0
+                    if filter.min_value.value != nil
+                      assign current_min = filter.min_value.value | divided_by: 100.0 | floor
+                    endif
+                    assign current_max = range_max
+                    if filter.max_value.value != nil
+                      assign current_max = filter.max_value.value | divided_by: 100.0 | ceil
+                    endif
+                  -%}
+                  <div class="price-range" data-price-range data-max="{{ range_max }}" data-currency="{{ cart.currency.iso_code }}">
+                    <div class="price-range__slider">
+                      <div class="price-range__track"><div class="price-range__fill" data-price-fill></div></div>
+                      <input
+                        type="range"
+                        class="price-range__input"
+                        name="{{ filter.min_value.param_name }}"
+                        min="0"
+                        max="{{ range_max }}"
+                        step="1"
+                        value="{{ current_min }}"
+                        aria-label="{{ 'collections.price_min' | t }}"
+                        data-price-min
+                      >
+                      <input
+                        type="range"
+                        class="price-range__input"
+                        name="{{ filter.max_value.param_name }}"
+                        min="0"
+                        max="{{ range_max }}"
+                        step="1"
+                        value="{{ current_max }}"
+                        aria-label="{{ 'collections.price_max' | t }}"
+                        data-price-max
+                      >
+                    </div>
+                    <div class="price-range__labels">
+                      <span data-price-min-label>{{ current_min }} {{ cart.currency.iso_code }}</span>
+                      <span data-price-max-label>{{ current_max }} {{ cart.currency.iso_code }}</span>
+                    </div>
+                    {%- comment -%} Móvil: campos Min / Max (sin name: copian su valor a los deslizadores) {%- endcomment -%}
+                    <div class="price-range__fields">
+                      <label class="price-range__field">
+                        <span class="price-range__field-label">{{ 'collections.min' | t }}</span>
+                        <span class="price-range__field-box">
+                          <span class="price-range__symbol" aria-hidden="true">{{ cart.currency.symbol }}</span>
+                          <input
+                            type="number"
+                            inputmode="numeric"
+                            min="0"
+                            max="{{ range_max }}"
+                            step="1"
+                            value="{{ current_min }}"
+                            data-price-field="min"
+                          >
+                        </span>
+                      </label>
+                      <label class="price-range__field">
+                        <span class="price-range__field-label">{{ 'collections.max' | t }}</span>
+                        <span class="price-range__field-box">
+                          <span class="price-range__symbol" aria-hidden="true">{{ cart.currency.symbol }}</span>
+                          <input
+                            type="number"
+                            inputmode="numeric"
+                            min="0"
+                            max="{{ range_max }}"
+                            step="1"
+                            value="{{ current_max }}"
+                            data-price-field="max"
+                          >
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+              {%- endcase -%}
+              </div>
+            </fieldset>
+          {%- else -%}
+            <p class="filters__empty">{{ 'collections.no_filters' | t }}</p>
+          {%- endfor -%}
+        </div>
+
+        {%- comment -%} Móvil: los filtros ya se aplican al marcarlos; "View all" cierra el panel {%- endcomment -%}
+        <div class="filters__footer">
+          <button type="button" class="filters__apply" data-filters-close>{{ 'collections.view_all' | t }}</button>
+          <a href="{{ clear_url }}" class="filters__reset" data-filters-clear>{{ 'collections.clear' | t }}</a>
+        </div>
+      </form>
+    </aside>
+    <div class="filters__overlay" data-filters-close hidden></div>
+
+    <div class="main-collection__main">
+      <div class="collection-toolbar">
+        {%- if section.settings.show_search -%}
+          <form action="{{ routes.search_url }}" method="get" role="search" class="collection-toolbar__search">
+            <label class="visually-hidden" for="CollectionSearch-{{ section.id }}">{{ 'search.submit' | t }}</label>
+            {{- 'icon-search.svg' | inline_asset_content -}}
+            <input
+              id="CollectionSearch-{{ section.id }}"
+              type="search"
+              name="q"
+              value="{{ search_terms | escape }}"
+              placeholder="{{ 'collections.search_placeholder' | t }}"
+              autocomplete="off"
+            >
+            <input type="hidden" name="type" value="product">
+            <input type="hidden" name="options[prefix]" value="last">
+          </form>
+        {%- endif -%}
+
+        <button
+          type="button"
+          class="collection-toolbar__filters-button"
+          aria-controls="Filters-{{ section.id }}"
+          aria-expanded="false"
+          data-filters-open
+        >
+          <svg class="collection-toolbar__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2 2.5h12l-4.6 5.6v4.6l-2.8 1.3V8.1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          </svg>
+          <span>{{ 'collections.filters' | t }}</span>
+          {%- if active_filters > 0 -%}
+            <span class="collection-toolbar__count">
+              <span class="visually-hidden">(</span>{{ active_filters }}<span class="visually-hidden">)</span>
+            </span>
+          {%- endif -%}
+        </button>
+
+        <div class="collection-toolbar__sort">
+          <label for="SortBy-{{ section.id }}">{{ 'collections.order_by' | t }}</label>
+          {%- comment -%} Móvil: botón "Sort" (el select transparente encima abre el selector nativo) {%- endcomment -%}
+          <span class="collection-toolbar__sort-button" aria-hidden="true">
+            {{- 'collections.sort' | t -}}
+            <svg class="collection-toolbar__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
+              <path d="M5 2v11M2.5 10.5 5 13l2.5-2.5M11 14V3M8.5 5.5 11 3l2.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <div class="collection-toolbar__select">
+            <select id="SortBy-{{ section.id }}" name="sort_by" form="FiltersForm-{{ section.id }}" data-sort>
+              {%- for option in sort_options -%}
+                <option
+                  value="{{ option.value }}"
+                  {% if option.value == sort_by %}
+                    selected
+                  {% endif %}
+                >
+                  {{- option.name | escape -}}
+                </option>
+              {%- endfor -%}
+            </select>
+            {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+          </div>
+        </div>
+      </div>
+
+      <div class="main-collection__products" data-products aria-live="polite">
+        {%- if items.size > 0 -%}
+          <ul class="main-collection__grid" role="list">
+            {%- for product in items -%}
+              {%- if product.object_type != 'product' -%}{%- continue -%}{%- endif -%}
+              <li>
+                {%- render 'product-card',
+                  product: product,
+                  badge_source: section.settings.badge_source,
+                  tax_note: section.settings.tax_note,
+                  show_rating: section.settings.show_rating,
+                  sizes: '(min-width: 990px) 280px, 45vw',
+                  full_button: true
+                -%}
+              </li>
+            {%- endfor -%}
+          </ul>
+
+          {%- comment -%}
+            Paginación: anterior / números / siguiente y "Showing 1–24 of N products". Los enlaces llevan
+            data-filter-link: cambian de página sin recargar (como los filtros) y suben al principio de la lista.
+          {%- endcomment -%}
+          {%- if paginate.pages > 1 -%}
+            {%- liquid
+              assign page_first = paginate.current_offset | plus: 1
+              assign page_last = paginate.current_offset | plus: paginate.page_size
+              if page_last > paginate.items
+                assign page_last = paginate.items
+              endif
+            -%}
+            <div class="collection-pagination">
+              <nav class="pagination" aria-label="{{ 'collections.pagination' | t }}">
+                {%- if paginate.previous -%}
+                  <a
+                    href="{{ paginate.previous.url }}"
+                    class="pagination__item pagination__item--arrow"
+                    aria-label="{{ 'collections.previous_page' | t }}"
+                    data-filter-link
+                    data-page-link
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3 5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </a>
+                {%- else -%}
+                  <span class="pagination__item pagination__item--arrow pagination__item--disabled" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3 5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                {%- endif -%}
+                {%- for part in paginate.parts -%}
+                  {%- if part.is_link -%}
+                    <a
+                      href="{{ part.url }}"
+                      class="pagination__item"
+                      aria-label="{{ 'collections.go_to_page' | t: page: part.title }}"
+                      data-filter-link
+                      data-page-link
+                    >
+                      {{- part.title -}}
+                    </a>
+                  {%- elsif part.title == paginate.current_page -%}
+                    <span class="pagination__item pagination__item--current" aria-current="page">{{ part.title }}</span>
+                  {%- else -%}
+                    <span class="pagination__item pagination__item--gap">{{ part.title }}</span>
+                  {%- endif -%}
+                {%- endfor -%}
+                {%- if paginate.next -%}
+                  <a
+                    href="{{ paginate.next.url }}"
+                    class="pagination__item pagination__item--arrow"
+                    aria-label="{{ 'collections.next_page' | t }}"
+                    data-filter-link
+                    data-page-link
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m6 3 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </a>
+                {%- else -%}
+                  <span class="pagination__item pagination__item--arrow pagination__item--disabled" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m6 3 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                {%- endif -%}
+              </nav>
+              <p class="collection-pagination__info">
+                {{- 'collections.showing' | t: first: page_first, last: page_last, total: paginate.items -}}
+              </p>
+            </div>
+          {%- endif -%}
+        {%- else -%}
+          <div class="main-collection__empty">
+            <p class="main-collection__empty-title">
+              {%- if is_search and search_terms == blank -%}
+                {{- 'search.enter_term' | t -}}
+              {%- elsif is_search and active_filters == 0 -%}
+                {{- 'search.no_results' | t: terms: search_terms -}}
+              {%- else -%}
+                {{- 'collections.no_results' | t -}}
+              {%- endif -%}
+            </p>
+            {%- if active_filters > 0 -%}
+              <a href="{{ clear_url }}" class="button button--primary" data-filters-clear>{{ 'collections.clear_filters' | t }}</a>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</collection-filters>

@@ -1,0 +1,976 @@
+{% comment %}
+  Pie de página.
+  - Logo (subido en el editor o el de assets por defecto).
+  - Columnas como bloques: "menu" (título + menú de Shopify, con enlace opcional "Shop all" arriba)
+    y "contact" (título, teléfono, email).
+  - Newsletter: formulario de cliente de Shopify (se guarda como suscriptor con la etiqueta "newsletter").
+  - Métodos de pago: por defecto la imagen del diseño (assets/payment-icons.png: Apple Pay, Google Pay,
+    PayPal, Visa, Mastercard, Revolut); con el ajuste "Store payment methods", los iconos de los
+    métodos activados en la tienda (shop.enabled_payment_types).
+  - Línea divisoria y copyright.
+  - Desktop: logo | 4 columnas | newsletter (+ pagos abajo).
+  - Móvil (diseño del usuario): logo centrado, newsletter, columnas en acordeón (el título es un botón
+    con flecha; se abren de una en una a la vez que se pueden cerrar), pagos centrados, copyright y
+    enlaces legales. Sin el texto del newsletter.
+{% endcomment %}
+
+{%- liquid
+  assign logo = section.settings.logo
+  assign logo_alt = shop.name | escape
+  assign columns = section.blocks.size
+-%}
+
+<footer
+  class="footer full-width footer--cols-{{ columns }}"
+  style="--footer-bg: {{ section.settings.background }}; --logo-width: {{ section.settings.logo_width | divided_by: 16.0 }}rem;"
+>
+  <div class="footer__container">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <a href="{{ routes.root_url }}" class="footer__logo">
+          {%- if logo != blank -%}
+            {{
+              logo
+              | image_url: width: 600
+              | image_tag: alt: logo_alt, loading: 'lazy', widths: '150, 300, 450, 600', sizes: '150px'
+            }}
+          {%- else -%}
+            <img
+              src="{{ 'logo-the-spanish-store.png' | asset_url }}"
+              alt="{{ logo_alt }}"
+              width="138"
+              height="69"
+              loading="lazy"
+            >
+          {%- endif -%}
+        </a>
+      </div>
+
+      {%- for block in section.blocks -%}
+        <div class="footer__column{% if block.settings.heading != blank %} footer__column--toggle{% endif %}" {{ block.shopify_attributes }}>
+          {%- if block.settings.heading != blank -%}
+            <h2 class="footer__heading">
+              <button
+                type="button"
+                class="footer__toggle"
+                aria-expanded="false"
+                aria-controls="FooterPanel-{{ block.id }}"
+                data-footer-toggle
+              >
+                {{- block.settings.heading | escape -}}
+                {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+              </button>
+            </h2>
+          {%- endif -%}
+
+          <div class="footer__panel" id="FooterPanel-{{ block.id }}">
+          {%- case block.type -%}
+            {%- when 'menu' -%}
+              {%- if block.settings.menu.links.size > 0 or block.settings.show_shop_all or block.settings.show_blog or block.settings.show_about or block.settings.show_contact or block.settings.show_faq or block.settings.show_service_policies -%}
+                <ul class="footer__links" role="list">
+                  {%- if block.settings.show_shop_all -%}
+                    {%- assign shop_all_label = block.settings.shop_all_label | default: 'Shop all' -%}
+                    <li>
+                      <a
+                        href="{{ routes.all_products_collection_url }}"
+                        {% if template.name == 'collection' and collection.handle == 'all' %}
+                          aria-current="page"
+                        {% endif %}
+                      >
+                        {{- shop_all_label | escape -}}
+                      </a>
+                    </li>
+                  {%- endif -%}
+                  {%- if block.settings.show_blog -%}
+                    {%- liquid
+                      assign footer_blog = block.settings.blog | default: blogs.news
+                      assign footer_blog_url = footer_blog.url | default: '/blogs/news'
+                      assign footer_blog_label = block.settings.blog_label | default: 'Blog'
+                    -%}
+                    <li>
+                      <a
+                        href="{{ footer_blog_url }}"
+                        {% if template.name == 'blog' or template.name == 'article' %}
+                          aria-current="page"
+                        {% endif %}
+                      >
+                        {{- footer_blog_label | escape -}}
+                      </a>
+                    </li>
+                  {%- endif -%}
+                  {%- assign footer_about_url = section.settings.about_page.url | default: pages['about-us'].url -%}
+                  {%- if block.settings.show_about and footer_about_url != blank -%}
+                    <li>
+                      <a
+                        href="{{ footer_about_url }}"
+                        {% if request.path == footer_about_url %}
+                          aria-current="page"
+                        {% endif %}
+                      >
+                        {{- block.settings.about_label | default: 'About us' | escape -}}
+                      </a>
+                    </li>
+                  {%- endif -%}
+                  {%- assign footer_faq_url = section.settings.faq_page.url | default: pages.faq.url -%}
+                  {%- if block.settings.show_faq and footer_faq_url != blank -%}
+                    <li>
+                      <a
+                        href="{{ footer_faq_url }}"
+                        {% if request.path == footer_faq_url %}
+                          aria-current="page"
+                        {% endif %}
+                      >
+                        {{- block.settings.faq_label | default: 'FAQ' | escape -}}
+                      </a>
+                    </li>
+                  {%- endif -%}
+                  {%- assign footer_contact_url = section.settings.contact_page.url | default: pages.contact.url -%}
+                  {%- if block.settings.show_contact and footer_contact_url != blank -%}
+                    <li>
+                      <a
+                        href="{{ footer_contact_url }}"
+                        {% if request.path == footer_contact_url %}
+                          aria-current="page"
+                        {% endif %}
+                      >
+                        {{- block.settings.contact_label | default: 'Contact' | escape -}}
+                      </a>
+                    </li>
+                  {%- endif -%}
+                  {%- comment -%} Políticas de atención al cliente: envíos y devoluciones (si existen) {%- endcomment -%}
+                  {%- if block.settings.show_service_policies -%}
+                    {%- for policy in shop.policies -%}
+                      {%- if policy.url contains 'shipping-policy' or policy.url contains 'refund-policy' -%}
+                        <li><a href="{{ policy.url }}">{{ policy.title | escape }}</a></li>
+                      {%- endif -%}
+                    {%- endfor -%}
+                  {%- endif -%}
+                  {%- for link in block.settings.menu.links -%}
+                    <li>
+                      <a
+                        href="{{ link.url }}"
+                        {% if link.current %}
+                          aria-current="page"
+                        {% endif %}
+                      >
+                        {{- link.title | escape -}}
+                      </a>
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              {%- endif -%}
+
+            {%- when 'contact' -%}
+              <ul class="footer__links" role="list">
+                {%- if block.settings.phone != blank -%}
+                  {%- assign phone_href = block.settings.phone | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
+                  <li>
+                    <a href="tel:{{ phone_href }}">{{ block.settings.phone | escape }}</a>
+                  </li>
+                {%- endif -%}
+                {%- if block.settings.email != blank -%}
+                  <li>
+                    <a href="mailto:{{ block.settings.email | strip }}">{{ block.settings.email | escape }}</a>
+                  </li>
+                {%- endif -%}
+              </ul>
+          {%- endcase -%}
+          </div>
+        </div>
+      {%- endfor -%}
+
+      <div class="footer__aside">
+        {%- if section.settings.show_newsletter -%}
+          <div class="footer__newsletter" id="FooterNewsletter-{{ section.id }}">
+            {%- if section.settings.newsletter_heading != blank -%}
+              <h2 class="footer__newsletter-heading">{{ section.settings.newsletter_heading | escape }}</h2>
+            {%- endif -%}
+
+            {%- form 'customer', id: 'FooterNewsletterForm', class: 'footer__form' -%}
+              <input type="hidden" name="contact[tags]" value="newsletter">
+              {%- if form.posted_successfully? -%}
+                <p class="footer__form-message" role="status">{{ 'footer.newsletter_success' | t }}</p>
+              {%- else -%}
+                <div class="footer__field">
+                  <label class="visually-hidden" for="FooterEmail-{{ section.id }}">{{ 'footer.newsletter_email' | t }}</label>
+                  <input
+                    id="FooterEmail-{{ section.id }}"
+                    class="footer__input"
+                    type="email"
+                    name="contact[email]"
+                    placeholder="{{ 'footer.newsletter_email' | t }}"
+                    autocomplete="email"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    required
+                    {% if form.errors %}
+                      aria-invalid="true" aria-describedby="FooterEmailError-{{ section.id }}"
+                    {% endif %}
+                  >
+                  <button type="submit" class="footer__submit" aria-label="{{ 'footer.newsletter_submit' | t }}">
+                    {{- 'icon-arrow-right.svg' | inline_asset_content -}}
+                  </button>
+                </div>
+                {%- if form.errors -%}
+                  <p class="footer__form-message footer__form-message--error" id="FooterEmailError-{{ section.id }}" role="alert">
+                    {{ form.errors.translated_fields.email | capitalize }}
+                    {{ form.errors.messages.email }}
+                  </p>
+                {%- endif -%}
+              {%- endif -%}
+            {%- endform -%}
+
+            {%- if section.settings.newsletter_text != blank -%}
+              <p class="footer__newsletter-text">{{ section.settings.newsletter_text | escape }}</p>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        {%- if section.settings.show_payment_icons -%}
+          {%- if section.settings.payment_icons_source == 'store' and shop.enabled_payment_types.size > 0 -%}
+            <ul class="footer__payments" role="list" aria-label="{{ 'footer.payment_methods' | t }}">
+              {%- for type in shop.enabled_payment_types -%}
+                <li>{{ type | payment_type_svg_tag: class: 'footer__payment-icon' }}</li>
+              {%- endfor -%}
+            </ul>
+          {%- elsif section.settings.payment_icons_source == 'image' -%}
+            <div class="footer__payments">
+              <img
+                class="footer__payments-image"
+                src="{{ 'payment-icons.png' | asset_url }}"
+                alt="{{ 'footer.payment_methods_list' | t }}"
+                width="319"
+                height="53"
+                loading="lazy"
+              >
+            </div>
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      {%- if section.settings.show_policies -%}
+        <ul class="footer__policies" role="list" aria-label="{{ 'footer.legal' | t }}">
+          {%- liquid
+            # Si una columna ya muestra envíos y devoluciones, aquí solo van las legales (privacidad, términos…)
+            assign service_in_columns = false
+            for block in section.blocks
+              if block.settings.show_service_policies
+                assign service_in_columns = true
+              endif
+            endfor
+          -%}
+          {%- for policy in shop.policies -%}
+            {%- if service_in_columns -%}
+              {%- if policy.url contains 'shipping-policy' or policy.url contains 'refund-policy' -%}
+                {%- continue -%}
+              {%- endif -%}
+            {%- endif -%}
+            <li><a href="{{ policy.url }}">{{ policy.title | escape }}</a></li>
+          {%- endfor -%}
+          {%- comment -%} Reabre el banner de cookies de Shopify (Customer Privacy); solo si está activo {%- endcomment -%}
+          <li data-privacy-choice hidden>
+            <button type="button" class="footer__privacy-button" data-privacy-preferences>
+              {{- 'footer.cookie_preferences' | t -}}
+            </button>
+          </li>
+        </ul>
+      {%- endif -%}
+      <p class="footer__copyright">
+        {%- if section.settings.copyright != blank -%}
+          {{ section.settings.copyright | escape }}
+        {%- else -%}
+          {%- assign current_year = 'now' | date: '%Y' -%}
+          {{ 'footer.copyright' | t: year: current_year, shop: shop.name }}
+        {%- endif -%}
+      </p>
+    </div>
+  </div>
+</footer>
+
+{% stylesheet %}
+  .footer {
+    background-color: var(--footer-bg);
+    color: #000;
+  }
+
+  .footer__container {
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    margin-inline: auto;
+    padding-block: 2.5rem 1rem;
+  }
+
+  /* Móvil: logo, columnas en 2×2 y newsletter a todo el ancho */
+  .footer__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem 1rem;
+  }
+
+  .footer__brand,
+  .footer__aside {
+    grid-column: 1 / -1;
+  }
+
+  .footer__logo {
+    display: inline-block;
+  }
+
+  .footer__logo img {
+    width: var(--logo-width);
+    height: auto;
+  }
+
+  .footer__heading {
+    margin: 0 0 0.625rem;
+    color: var(--color-accent);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .footer__links {
+    display: grid;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0;
+    font-size: 0.9375rem;
+    line-height: 1.3;
+    list-style: none;
+  }
+
+  .footer__links a {
+    color: inherit;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  /* Subrayado animado: critical.css */
+  .footer__links a:hover,
+  .footer__links a[aria-current='page'] {
+    color: var(--color-accent);
+  }
+
+  .footer__aside {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .footer__newsletter-heading {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .footer__field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-block-start: 0.125rem;
+    border-bottom: 1px solid #000;
+  }
+
+  .footer__input {
+    flex: 1;
+    min-width: 0;
+    height: 2rem;
+    padding: 0 2rem 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #000;
+    font-size: 0.9375rem;
+  }
+
+  .footer__input::placeholder {
+    color: #5f5c55;
+    opacity: 1;
+    text-transform: uppercase;
+  }
+
+  .footer__input:focus-visible {
+    outline: none;
+  }
+
+  .footer__field:focus-within {
+    border-bottom-color: var(--color-accent);
+    box-shadow: 0 1px 0 var(--color-accent);
+  }
+
+  .footer__submit {
+    position: absolute;
+    right: -0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #000;
+    cursor: pointer;
+  }
+
+  .footer__submit svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .footer__submit:hover {
+    color: var(--color-accent);
+  }
+
+  .footer__form-message {
+    margin: 0.75rem 0 0;
+    font-size: 0.9375rem;
+  }
+
+  .footer__form-message--error {
+    color: var(--color-accent);
+  }
+
+  .footer__newsletter-text {
+    margin: 1rem 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.25;
+  }
+
+  .footer__payments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .footer__payment-icon {
+    display: block;
+    width: 2.1875rem;
+    height: auto;
+  }
+
+  /* Imagen con los logos en sus recuadros blancos (232 px de ancho, como en el diseño) */
+  .footer__payments-image {
+    display: block;
+    width: 14.5rem;
+    height: auto;
+  }
+
+  .footer__bottom {
+    margin-block-start: 1.9375rem;
+    padding-block-start: 1.125rem;
+    border-top: 1px solid #b1ad9c;
+    text-align: center;
+  }
+
+  /* Políticas legales y preferencias de cookies */
+  .footer__policies {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.375rem 1.25rem;
+    margin: 0 0 0.875rem;
+    padding: 0;
+    list-style: none;
+    font-size: 0.875rem;
+  }
+
+  .footer__policies a,
+  .footer__privacy-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #000;
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.1875rem;
+    cursor: pointer;
+  }
+
+  .footer__policies a:hover,
+  .footer__privacy-button:hover {
+    color: var(--color-accent);
+  }
+
+  .footer__copyright {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.3;
+  }
+
+  @media (min-width: 750px) {
+    .footer__grid {
+      grid-template-columns: 13.875rem repeat(var(--footer-columns, 4), minmax(0, 1fr)) 21.6875rem;
+      gap: 0;
+    }
+
+    .footer--cols-1 .footer__grid { --footer-columns: 1; }
+    .footer--cols-2 .footer__grid { --footer-columns: 2; }
+    .footer--cols-3 .footer__grid { --footer-columns: 3; }
+
+    /* Con 4 columnas, los anchos exactos del diseño */
+    .footer--cols-4 .footer__grid {
+      grid-template-columns: 13.875rem 8.0625rem 8.4375rem 6.0625rem minmax(0, 1fr) 21.6875rem;
+    }
+
+    .footer__brand,
+    .footer__aside {
+      grid-column: auto;
+    }
+
+    .footer__container {
+      padding-block: 3.25rem 1rem;
+    }
+
+    .footer__column {
+      padding-inline-end: 1rem;
+    }
+
+    .footer__aside {
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    /* Como en el diseño, los logos de pago bajan un poco por debajo de las columnas
+       (no afecta al resto del layout; el margen de la línea lo compensa) */
+    .footer__payments {
+      position: relative;
+      top: 1.125rem;
+      justify-content: flex-end;
+    }
+
+    .footer__bottom {
+      margin-block-start: 3.0625rem;
+    }
+  }
+
+  /* El título de columna es un botón solo en móvil (acordeón); en desktop se ve como texto */
+  .footer__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .footer__toggle svg {
+    display: none;
+  }
+
+  /* Móvil (diseño del usuario a 375 px): logo de 192 px, newsletter de 18 px, acordeones de 47 px
+     con línea #B2AD9C, pagos de 296 px centrados, copyright y enlaces legales de 15 px */
+  @media (max-width: 749px) {
+    .footer__container {
+      padding-block: 2.1875rem 1.625rem;
+    }
+
+    .footer__grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* Newsletter y pagos se colocan por separado (newsletter antes de las columnas) */
+    .footer__aside {
+      display: contents;
+    }
+
+    .footer__brand {
+      order: 0;
+      text-align: center;
+    }
+
+    .footer__logo img {
+      width: 12rem;
+    }
+
+    .footer__newsletter {
+      order: 1;
+      margin-block: 2.75rem 2.875rem;
+    }
+
+    .footer__column {
+      order: 2;
+      border-bottom: 1px solid #b2ad9c;
+    }
+
+    .footer__payments {
+      order: 3;
+      justify-content: center;
+      margin-block-start: 3.3125rem;
+    }
+
+    .footer__payments-image {
+      width: 18.5rem;
+      margin-inline: auto;
+    }
+
+    .footer__newsletter-heading {
+      font-size: 1.125rem;
+    }
+
+    .footer__field {
+      border-bottom-color: #b2ad9c;
+    }
+
+    .footer__input {
+      height: 2.75rem;
+      font-size: 0.9375rem;
+    }
+
+    .footer__newsletter-text {
+      display: none;
+    }
+
+    .footer__heading {
+      margin: 0;
+      color: #000;
+      font-size: 1.125rem;
+    }
+
+    .footer__toggle {
+      min-height: 2.9375rem;
+      padding: 0.25rem 0.9375rem 0.25rem 0.625rem;
+    }
+
+    .footer__toggle svg {
+      display: block;
+      flex-shrink: 0;
+      width: 0.875rem;
+      height: 0.875rem;
+      transition: rotate 0.2s ease;
+    }
+
+    .footer__toggle[aria-expanded='true'] svg {
+      rotate: 180deg;
+    }
+
+    .footer__column--toggle:not(.is-open) .footer__panel {
+      display: none;
+    }
+
+    .footer__panel .footer__links {
+      gap: 0.875rem;
+      padding: 0.25rem 0.625rem 1.25rem;
+      font-size: 1rem;
+    }
+
+    .footer__bottom {
+      display: flex;
+      flex-direction: column;
+      margin-block-start: 3.4375rem;
+      padding-block-start: 0;
+      border-top: 0;
+    }
+
+    .footer__copyright {
+      order: -1;
+      font-size: 1rem;
+    }
+
+    .footer__policies {
+      gap: 0.375rem 1.375rem;
+      margin: 0.875rem 0 0;
+      font-size: 1rem;
+    }
+
+    .footer__policies a,
+    .footer__privacy-button {
+      text-decoration: none;
+    }
+
+    .footer__policies a:hover,
+    .footer__privacy-button:hover {
+      text-decoration: underline;
+    }
+  }
+
+  @media (min-width: 750px) {
+    .footer__toggle {
+      cursor: default;
+      pointer-events: none;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  // Columnas en acordeón (solo móvil). En desktop el botón del título no hace nada y no se tabula.
+  (() => {
+    const mobile = window.matchMedia('(max-width: 749px)');
+    const sync = () => {
+      document.querySelectorAll('[data-footer-toggle]').forEach((button) => {
+        if (mobile.matches) {
+          button.removeAttribute('tabindex');
+          button.setAttribute('aria-expanded', String(button.closest('.footer__column').classList.contains('is-open')));
+        } else {
+          button.setAttribute('tabindex', '-1');
+          button.removeAttribute('aria-expanded');
+        }
+      });
+    };
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-footer-toggle]');
+      if (!button || !mobile.matches) return;
+      const column = button.closest('.footer__column');
+      const open = !column.classList.contains('is-open');
+      column.classList.toggle('is-open', open);
+      button.setAttribute('aria-expanded', String(open));
+    });
+    mobile.addEventListener('change', sync);
+    document.addEventListener('shopify:section:load', sync);
+    sync();
+  })();
+
+  // Botón "Cookie preferences": el banner de Shopify (Customer Privacy) se carga aparte;
+  // cuando está disponible se muestra el botón y al pulsarlo se abren sus preferencias.
+  (() => {
+    const show = () => {
+      if (!window.privacyBanner || typeof window.privacyBanner.showPreferences !== 'function') return false;
+      document.querySelectorAll('[data-privacy-choice]').forEach((item) => (item.hidden = false));
+      return true;
+    };
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('[data-privacy-preferences]')) window.privacyBanner?.showPreferences();
+    });
+    if (!show()) {
+      window.addEventListener('load', show);
+      document.addEventListener('visitorConsentCollected', show);
+      setTimeout(show, 3000);
+    }
+  })();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:general.footer",
+  "max_blocks": 4,
+  "settings": [
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#EDE7D0"
+    },
+    {
+      "type": "header",
+      "content": "t:labels.logo"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "t:labels.logo",
+      "info": "t:info.logo"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "label": "t:labels.logo_width",
+      "min": 80,
+      "max": 250,
+      "step": 2,
+      "unit": "px",
+      "default": 148
+    },
+    {
+      "type": "header",
+      "content": "t:general.newsletter"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_newsletter",
+      "label": "t:labels.show_newsletter",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "newsletter_heading",
+      "label": "t:labels.heading",
+      "default": "Get the full scoop"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_text",
+      "label": "t:labels.text",
+      "default": "Lorem ipsum dolor sit amet consectetur. Semper pellentesque faucibus eleifend lorem volutpat id."
+    },
+    {
+      "type": "header",
+      "content": "t:general.footer"
+    },
+    {
+      "type": "page",
+      "id": "about_page",
+      "label": "t:labels.about_page",
+      "info": "t:info.about_page"
+    },
+    {
+      "type": "page",
+      "id": "contact_page",
+      "label": "t:labels.contact_page"
+    },
+    {
+      "type": "page",
+      "id": "faq_page",
+      "label": "t:labels.faq_page",
+      "info": "t:info.faq_page"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_policies",
+      "label": "t:labels.show_policies",
+      "info": "t:info.show_policies",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_payment_icons",
+      "label": "t:labels.show_payment_icons",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "payment_icons_source",
+      "label": "t:labels.payment_icons_source",
+      "info": "t:info.payment_icons",
+      "options": [
+        { "value": "image", "label": "t:options.payment_icons_source.image" },
+        { "value": "store", "label": "t:options.payment_icons_source.store" }
+      ],
+      "default": "image"
+    },
+    {
+      "type": "text",
+      "id": "copyright",
+      "label": "t:labels.copyright",
+      "info": "t:info.copyright"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "menu",
+      "name": "t:general.menu_column",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "t:labels.heading",
+          "default": "Collections"
+        },
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "t:labels.menu"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_shop_all",
+          "label": "t:labels.show_shop_all",
+          "info": "t:info.shop_all_footer",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "shop_all_label",
+          "label": "t:labels.shop_all_label",
+          "default": "Shop all"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_blog",
+          "label": "t:labels.show_blog_link",
+          "default": false
+        },
+        {
+          "type": "blog",
+          "id": "blog",
+          "label": "t:labels.blog"
+        },
+        {
+          "type": "text",
+          "id": "blog_label",
+          "label": "t:labels.blog_label",
+          "default": "Blog"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_about",
+          "label": "t:labels.show_about_link",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "about_label",
+          "label": "t:labels.about_label",
+          "default": "About us"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_contact",
+          "label": "t:labels.show_contact_link",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "contact_label",
+          "label": "t:labels.contact_label",
+          "default": "Contact"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_faq",
+          "label": "t:labels.show_faq_link",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "faq_label",
+          "label": "t:labels.faq_link_label",
+          "default": "FAQ"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_service_policies",
+          "label": "t:labels.show_service_policies",
+          "info": "t:info.show_service_policies",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "contact",
+      "name": "t:general.contact_column",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "t:labels.heading",
+          "default": "Contact Us"
+        },
+        {
+          "type": "text",
+          "id": "phone",
+          "label": "t:labels.phone"
+        },
+        {
+          "type": "text",
+          "id": "email",
+          "label": "t:labels.email"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

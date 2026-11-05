@@ -1,0 +1,158 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "header",
+  "name": "t:general.header",
+  "sections": {
+    "announcement_bar": {
+      "type": "announcement-bar",
+      "blocks": {
+        "announcement_1": {
+          "type": "announcement",
+          "settings": {
+            "text": "Enjoy Authentic Spanish Cuisine - Disfrutar!",
+            "link": ""
+          }
+        },
+        "announcement_2": {
+          "type": "announcement",
+          "settings": {
+            "text": "Free Shipping on Orders Over $300 – Stock Up on Your Favourite Spanish Flavours!",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "announcement_1",
+        "announcement_2"
+      ],
+      "settings": {
+        "background": "#000000",
+        "foreground": "#FFFFFF",
+        "interval": 4
+      }
+    },
+    "header": {
+      "type": "header",
+      "settings": {
+        "show_blog": true,
+        "blog_label": "Blog",
+        "show_about": true,
+        "about_label": "About us",
+        "show_contact": true,
+        "contact_label": "Contact",
+        "menu": ""
+      },
+      "blocks": {
+        "charcuterie": {
+          "type": "category",
+          "settings": {
+            "title": "Charcuterie",
+            "heading": "Authentic Spanish charcuterie",
+            "text": "Tradition, flavour and quality in every bite.",
+            "button_label": "Shop now",
+            "show_banner": true,
+            "sub_1_title": "Serrano Ham",
+            "sub_2_title": "Chorizo & Sausages",
+            "sub_3_title": "Iberian Ham",
+            "sub_4_title": "Fuet",
+            "sub_5_title": "Salchichón",
+            "sub_6_title": "Lomo",
+            "sub_7_title": "Knives & More"
+          }
+        },
+        "cheese": {
+          "type": "category",
+          "settings": {
+            "title": "Cheese",
+            "heading": "Spanish cheeses",
+            "text": "From creamy to well-aged, the best of every region.",
+            "button_label": "Shop now",
+            "show_banner": true,
+            "sub_1_title": "Manchego",
+            "sub_2_title": "Sheep cheese",
+            "sub_3_title": "Goat cheese",
+            "sub_4_title": "Blue cheese",
+            "sub_5_title": "Cured cheese",
+            "sub_6_title": "Cheese boards"
+          }
+        },
+        "seafood": {
+          "type": "category",
+          "settings": {
+            "title": "Seafood",
+            "heading": "Premium Spanish seafood",
+            "text": "Preserved at their peak, straight from the coast.",
+            "button_label": "Shop now",
+            "show_banner": false,
+            "sub_1_title": "Tuna & Bonito",
+            "sub_2_title": "Sardines & Anchovies",
+            "sub_3_title": "Mussels & Clams",
+            "sub_4_title": "Octopus & Squid",
+            "sub_5_title": "Seafood pâtés"
+          }
+        },
+        "paella": {
+          "type": "category",
+          "settings": {
+            "title": "Paella",
+            "heading": "Everything for your paella",
+            "text": "Rice, saffron and pans to cook it like in Valencia.",
+            "button_label": "Shop now",
+            "show_banner": false,
+            "sub_1_title": "Paella rice",
+            "sub_2_title": "Paella kits",
+            "sub_3_title": "Saffron & Spices",
+            "sub_4_title": "Paella pans"
+          }
+        },
+        "snacks": {
+          "type": "category",
+          "settings": {
+            "title": "Snacks & Desserts",
+            "heading": "Spanish snacks & sweets",
+            "text": "Olives, crisps, turrón and treats for every moment.",
+            "button_label": "Shop now",
+            "show_banner": false,
+            "sub_1_title": "Olives",
+            "sub_2_title": "Crisps & Crackers",
+            "sub_3_title": "Turrón",
+            "sub_4_title": "Chocolates & Sweets"
+          }
+        },
+        "gifts": {
+          "type": "category",
+          "settings": {
+            "title": "Gift sets",
+            "heading": "Gifts from Spain",
+            "text": "Ready-to-give boxes for food lovers.",
+            "button_label": "Shop now",
+            "show_banner": false,
+            "sub_1_title": "Gift boxes",
+            "sub_2_title": "Gourmet hampers",
+            "sub_3_title": "Gift cards"
+          }
+        }
+      },
+      "block_order": [
+        "charcuterie",
+        "cheese",
+        "seafood",
+        "paella",
+        "snacks",
+        "gifts"
+      ]
+    }
+  },
+  "order": [
+    "announcement_bar",
+    "header"
+  ]
+}

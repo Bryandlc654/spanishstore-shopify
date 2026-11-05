@@ -1,0 +1,177 @@
+{% comment %}
+  Banner de texto dentro del contenedor: fondo de color con patrón decorativo opcional,
+  titular y texto centrados y botón opcional (p. ej. "A taste of Spanish, made for sharing"
+  en rojo en la ficha de producto).
+  El patrón es assets/pattern-tile-light.svg (líneas blancas muy suaves, para fondos oscuros o de color).
+{% endcomment %}
+
+{%- liquid
+  if section.settings.show_pattern
+    assign pattern_url = 'pattern-tile-light.svg' | asset_url
+  endif
+-%}
+
+<div
+  class="text-banner full-width"
+  style="--text-banner-bg: {{ section.settings.background }}; --text-banner-fg: {{ section.settings.text_color }}; --text-banner-height: {{ section.settings.height | divided_by: 16.0 }}rem;{% if pattern_url %} --text-banner-pattern: url('{{ pattern_url }}');{% endif %}"
+>
+  {%- if section.settings.heading != blank -%}
+    <h2 class="text-banner__heading{% if section.settings.uppercase_heading %} text-banner__heading--uppercase{% endif %}">
+      {{- section.settings.heading | escape -}}
+    </h2>
+  {%- endif -%}
+  {%- if section.settings.text != blank -%}
+    <div class="text-banner__text">{{ section.settings.text }}</div>
+  {%- endif -%}
+  {%- if section.settings.button_label != blank -%}
+    <a
+      {% if section.settings.button_link != blank %}
+        href="{{ section.settings.button_link }}"
+      {% else %}
+        role="link" aria-disabled="true"
+      {% endif %}
+      class="button text-banner__button"
+    >
+      {{- section.settings.button_label | escape -}}
+    </a>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .text-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    justify-self: center;
+    width: min(var(--container-width), 100% - var(--page-margin) * 2);
+    min-height: calc(var(--text-banner-height) * 0.8);
+    margin-block: 2.5rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: 6px;
+    background-color: var(--text-banner-bg);
+    background-image: var(--text-banner-pattern, none);
+    background-position: center;
+    background-size: 5.75rem;
+    color: var(--text-banner-fg);
+    text-align: center;
+  }
+
+  .text-banner__heading {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .text-banner__heading--uppercase {
+    text-transform: uppercase;
+  }
+
+  .text-banner__text {
+    max-width: 25.5rem;
+    margin-block-start: 0.9375rem;
+    font-size: 0.9375rem;
+    font-weight: 300;
+    line-height: 1.21;
+    opacity: 0.85;
+  }
+
+  .text-banner__text p {
+    margin: 0;
+  }
+
+  /* Botón claro sobre el fondo de color */
+  .text-banner__button {
+    margin-block-start: 1.5rem;
+    background-color: var(--text-banner-fg);
+    color: var(--text-banner-bg);
+  }
+
+  .text-banner__button:hover {
+    opacity: 0.9;
+  }
+
+  @media (min-width: 750px) {
+    .text-banner {
+      min-height: var(--text-banner-height);
+      margin-block: 2.75rem 3rem;
+      padding-block: 2.875rem 2.5rem;
+    }
+
+    .text-banner__heading {
+      font-size: 1.4375rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.text_banner",
+  "tag": "section",
+  "class": "text-banner-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "A taste of Spanish, made for sharing"
+    },
+    {
+      "type": "checkbox",
+      "id": "uppercase_heading",
+      "label": "t:labels.uppercase_heading",
+      "default": true
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:labels.text",
+      "default": "<p>Exceptional Spanish products, selected with care, to turn everyday moments into special ones.</p>"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:labels.button_label"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:labels.button_link"
+    },
+    {
+      "type": "range",
+      "id": "height",
+      "label": "t:labels.height_desktop",
+      "min": 120,
+      "max": 500,
+      "step": 10,
+      "unit": "px",
+      "default": 200
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:labels.background",
+      "default": "#BE1621"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:labels.text_color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_pattern",
+      "label": "t:labels.show_pattern",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.text_banner"
+    }
+  ]
+}
+{% endschema %}

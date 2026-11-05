@@ -1,0 +1,532 @@
+{% doc %}
+  Tarjeta de producto reutilizable (carruseles, colecciones, búsqueda).
+
+  - Imagen cuadrada con etiqueta de categoría (tipo o fabricante), "Best seller" (si el producto
+    tiene la etiqueta "Best seller" o "best-seller") y descuento.
+  - Botón de carrito siempre visible y botón "Add to cart" que aparece al pasar el ratón.
+    Productos con una sola variante: se añaden directamente al carrito.
+    Productos con varias variantes: los botones llevan a la ficha del producto.
+  - Valoración: usa los metafields estándar de reseñas (reviews.rating y reviews.rating_count)
+    que rellenan apps como Judge.me. Si no existen, no se muestra.
+  - Sin producto, pinta una tarjeta de ejemplo con imagen placeholder.
+
+  @param {product} [product] - Producto a mostrar
+  @param {string} [badge_source] - 'type', 'vendor' o 'none' (por defecto 'type')
+  @param {string} [tax_note] - Texto bajo el precio
+  @param {boolean} [show_rating] - Mostrar estrellas (por defecto true)
+  @param {number} [placeholder_index] - Índice para el placeholder cuando no hay producto
+  @param {string} [sizes] - Atributo sizes de la imagen
+  @param {boolean} [full_button] - Móvil: botón "Add to cart" a todo el ancho bajo el precio, imagen más alta
+    (2:3) y textos más grandes, sin el botón redondo (página de tienda, diseño del usuario)
+
+  @example
+  {% render 'product-card', product: product, badge_source: 'type', tax_note: 'Taxes included.' %}
+{% enddoc %}
+
+{%- liquid
+  assign badge_source = badge_source | default: 'type'
+  assign sizes = sizes | default: '(min-width: 990px) 280px, (min-width: 750px) 30vw, 45vw'
+  assign currency = cart.currency.iso_code
+
+  if show_rating == false
+    assign rating_enabled = false
+  else
+    assign rating_enabled = true
+  endif
+
+  if product != blank
+    assign url = product.url
+    assign title = product.title
+    assign price = product.price
+    assign compare_at = product.compare_at_price
+    assign variant = product.selected_or_first_available_variant
+
+    case badge_source
+      when 'type'
+        assign badge = product.type
+      when 'vendor'
+        assign badge = product.vendor
+      else
+        assign badge = blank
+    endcase
+
+    assign rating = product.metafields.reviews.rating.value
+    assign rating_count = product.metafields.reviews.rating_count.value
+  else
+    assign url = routes.all_products_collection_url
+    assign title = 'Los Cameros Blended Cheese Cured 6 months World Cheese Award 2025-2026'
+    assign price = 929
+    assign compare_at = 1200
+    assign badge = 'Category'
+  endif
+
+  assign discount = 0
+  if compare_at > price
+    assign discount = compare_at | minus: price | times: 100.0 | divided_by: compare_at | round
+  endif
+-%}
+
+<div class="product-card{% if full_button %} product-card--full-button{% endif %}">
+  <div class="product-card__media">
+    <a href="{{ url }}" class="product-card__image-link" tabindex="-1" aria-hidden="true">
+      {%- if product.featured_media != blank -%}
+        {{
+          product.featured_media
+          | image_url: width: 900
+          | image_tag:
+            class: 'product-card__image',
+            alt: product.featured_media.alt,
+            loading: 'lazy',
+            widths: '300, 450, 600, 900',
+            sizes: sizes
+        }}
+      {%- else -%}
+        {%- assign placeholder = placeholder_index | default: 0 | modulo: 6 | plus: 1 | prepend: 'product-' -%}
+        {{ placeholder | placeholder_svg_tag: 'product-card__image product-card__image--placeholder' }}
+      {%- endif -%}
+    </a>
+
+    {%- liquid
+      assign best_seller = false
+      if product != blank
+        for tag in product.tags
+          assign tag_handle = tag | handleize
+          if tag_handle == 'best-seller' or tag_handle == 'bestseller'
+            assign best_seller = true
+            break
+          endif
+        endfor
+      endif
+    -%}
+    {%- if badge != blank or best_seller -%}
+      <div class="product-card__badges">
+        {%- if badge != blank -%}
+          <span class="product-card__badge product-card__badge--category">{{ badge | escape }}</span>
+        {%- endif -%}
+        {%- if best_seller -%}
+          <span class="product-card__badge product-card__badge--highlight">{{ 'products.best_seller' | t }}</span>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if discount > 0 -%}
+      <span class="product-card__badge product-card__badge--discount" aria-label="{{ 'products.save_percent' | t: percent: discount }}">
+        {{- discount }}%
+      </span>
+    {%- endif -%}
+
+    <div class="product-card__actions">
+      {%- if product != blank and product.available and product.has_only_default_variant -%}
+        {%- form 'product', product, class: 'product-card__form', novalidate: 'novalidate' -%}
+          <input type="hidden" name="id" value="{{ variant.id }}">
+          <button type="submit" name="add" class="product-card__add">{{ 'products.add_to_cart' | t }}</button>
+          <button type="submit" name="add" class="product-card__cart" aria-label="{{ 'products.add_to_cart_named' | t: title: title }}">
+            {{- 'icon-cart.svg' | inline_asset_content -}}
+          </button>
+        {%- endform -%}
+      {%- elsif product != blank and product.available == false -%}
+        <span class="product-card__add product-card__add--disabled">{{ 'products.sold_out' | t }}</span>
+      {%- else -%}
+        <a href="{{ url }}" class="product-card__add">
+          {%- if product != blank -%}
+            {{- 'products.choose_options' | t -}}
+          {%- else -%}
+            {{- 'products.add_to_cart' | t -}}
+          {%- endif -%}
+        </a>
+        <a href="{{ url }}" class="product-card__cart" aria-label="{{ 'products.choose_options_named' | t: title: title }}">
+          {{- 'icon-cart.svg' | inline_asset_content -}}
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+
+  <h3 class="product-card__title">
+    <a href="{{ url }}">{{ title | escape }}</a>
+  </h3>
+
+  <div class="product-card__price">
+    <span class="product-card__price-current">
+      {%- if product.price_varies -%}
+        {{ 'products.from' | t }}
+      {% endif -%}
+      {{- price | money_without_currency }} {{ currency -}}
+    </span>
+    {%- if discount > 0 -%}
+      <s class="product-card__price-compare">
+        <span class="visually-hidden">{{ 'products.regular_price' | t }}</span>
+        {{- compare_at | money_without_currency }} {{ currency -}}
+      </s>
+    {%- endif -%}
+  </div>
+
+  {%- if tax_note != blank -%}
+    <p class="product-card__note">{{ tax_note | escape }}</p>
+  {%- endif -%}
+
+  {%- if rating_enabled -%}
+    {%- if rating != blank -%}
+      {%- assign rating_out_of_5 = rating.rating | times: 5.0 | divided_by: rating.scale_max | round: 1 -%}
+      <div class="product-card__rating">
+        <span
+          class="rating-stars"
+          style="--rating: {{ rating_out_of_5 }};"
+          role="img"
+          aria-label="{{ 'accessibility.rating' | t: rating: rating_out_of_5, max: 5 }}"
+        ></span>
+        {%- if rating_count != blank -%}
+          <span class="product-card__rating-count">{{ 'products.reviews_count' | t: count: rating_count }}</span>
+        {%- endif -%}
+      </div>
+    {%- elsif product == blank -%}
+      <div class="product-card__rating">
+        <span class="rating-stars" style="--rating: 5;" role="img" aria-label="{{ 'accessibility.rating' | t: rating: 5, max: 5 }}"></span>
+        <span class="product-card__rating-count">{{ 'products.reviews_count' | t: count: 208 }}</span>
+      </div>
+    {%- endif -%}
+  {%- endif -%}
+
+  {%- if full_button -%}
+    <div class="product-card__footer">
+      {%- if product != blank and product.available and product.has_only_default_variant -%}
+        {%- form 'product', product, class: 'product-card__form', novalidate: 'novalidate' -%}
+          <input type="hidden" name="id" value="{{ variant.id }}">
+          <button type="submit" name="add" class="product-card__button">{{ 'products.add_to_cart' | t }}</button>
+        {%- endform -%}
+      {%- elsif product != blank and product.available == false -%}
+        <span class="product-card__button product-card__button--disabled">{{ 'products.sold_out' | t }}</span>
+      {%- else -%}
+        <a href="{{ url }}" class="product-card__button">
+          {%- if product != blank -%}
+            {{- 'products.choose_options' | t -}}
+          {%- else -%}
+            {{- 'products.add_to_cart' | t -}}
+          {%- endif -%}
+        </a>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .product-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .product-card__media {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 5px;
+    background-color: #f2f2f2;
+  }
+
+  .product-card__image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .product-card__image {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .product-card__image--placeholder {
+    fill: #c9c9c9;
+  }
+
+  .product-card:hover .product-card__image {
+    transform: scale(1.04);
+  }
+
+  .product-card__badges {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3125rem;
+    max-width: calc(100% - 4.5rem);
+    pointer-events: none;
+  }
+
+  .product-card__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.625rem;
+    padding: 0 0.4375rem;
+    border-radius: 3px;
+    font-size: 0.9375rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .product-card__badge--category {
+    padding-inline: 0.625rem;
+    font-size: 0.875rem;
+    background-color: #ede7d0;
+    color: #160600;
+  }
+
+  .product-card__badge--highlight {
+    padding-inline: 0.5rem;
+    background-color: var(--color-accent);
+    color: #fff;
+  }
+
+  .product-card__badge--discount {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding-inline: 0.5rem;
+    background-color: var(--color-accent);
+    color: #fff;
+  }
+
+  /* Botones sobre la imagen */
+  .product-card__actions,
+  .product-card__form {
+    position: absolute;
+    inset: auto 0.625rem 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    pointer-events: none;
+  }
+
+  .product-card__form {
+    position: static;
+    flex: 1;
+  }
+
+  .product-card__add,
+  .product-card__cart {
+    pointer-events: auto;
+  }
+
+  .product-card__add {
+    display: none;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.875rem;
+    padding: 0.25rem 0.75rem;
+    border: 0;
+    border-radius: 3px;
+    background-color: var(--color-accent);
+    color: #fff;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .product-card__add--disabled {
+    display: flex;
+    background-color: #6b6b6b;
+    cursor: default;
+  }
+
+  .product-card__cart {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .product-card__cart svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .product-card__add:not(.product-card__add--disabled):hover,
+  .product-card__cart:hover {
+    background-color: color-mix(in srgb, var(--color-accent) 85%, #000);
+  }
+
+  /* En dispositivos con ratón, "Add to cart" aparece al pasar por encima o con el teclado */
+  @media (hover: hover) {
+    .product-card__add:not(.product-card__add--disabled) {
+      display: flex;
+      opacity: 0;
+      transform: translateY(0.375rem);
+      transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+    }
+
+    .product-card:hover .product-card__add,
+    .product-card:focus-within .product-card__add {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .product-card__title {
+    margin: 0.625rem 0 0;
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.36;
+  }
+
+  .product-card__title a {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #202020;
+    text-decoration: none;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .product-card__title a:hover {
+    text-decoration: underline;
+  }
+
+  .product-card__price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.375rem;
+    margin-block-start: 0.75rem;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .product-card__price-current {
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+
+  .product-card__price-compare {
+    color: #6b6b6b;
+    font-weight: 300;
+  }
+
+  .product-card__note {
+    margin: 0.4375rem 0 0;
+    color: #6b6b6b;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+  }
+
+  .product-card__rating {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-block-start: 0.9375rem;
+    color: #6b6b6b;
+    font-size: 0.9375rem;
+    line-height: 1;
+  }
+
+  .product-card__rating .rating-stars {
+    --star-size: 0.75rem;
+    --star-step: 0.875rem;
+  }
+
+  .product-card__footer {
+    display: none;
+  }
+
+  /* Tienda en móvil (diseño del usuario, a 375 px): imagen 2:3, nombre de 16 px en 2 líneas, precio de 15 px,
+     tachado de 14 px, nota de 12,5 px y botón "Add to cart" de 48 px a todo el ancho */
+  @media (max-width: 749px) {
+    .product-card--full-button {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .product-card--full-button .product-card__media {
+      aspect-ratio: 166 / 240;
+    }
+
+    .product-card--full-button .product-card__actions {
+      display: none;
+    }
+
+    .product-card--full-button .product-card__title {
+      margin-block-start: 0.5625rem;
+      font-size: 1.0625rem;
+      line-height: 1.1875rem;
+    }
+
+    .product-card--full-button .product-card__title a {
+      color: #000;
+    }
+
+    .product-card--full-button .product-card__price {
+      margin-block-start: 0.875rem;
+    }
+
+    .product-card--full-button .product-card__price-compare {
+      font-size: 0.9375rem;
+    }
+
+    .product-card--full-button .product-card__note {
+      margin-block-start: 0.375rem;
+      font-size: 0.9375rem;
+    }
+
+    .product-card--full-button .product-card__footer {
+      display: block;
+      margin-block-start: auto;
+      padding-block-start: 0.75rem;
+    }
+
+    .product-card__button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 3rem;
+      padding: 0 0.5rem;
+      border: 0;
+      border-radius: 3px;
+      background-color: var(--color-accent);
+      color: #fff;
+      font: inherit;
+      font-size: 1.0625rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .product-card__button:hover {
+      background-color: #9e121b;
+    }
+
+    .product-card__button--disabled {
+      background-color: #b9b9b9;
+      cursor: default;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .product-card__image,
+    .product-card__add {
+      transition: none;
+    }
+
+    .product-card:hover .product-card__image {
+      transform: none;
+    }
+  }
+{% endstylesheet %}

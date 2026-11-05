@@ -1,0 +1,240 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "faq-page",
+      "blocks": {
+        "topic_1": {
+          "type": "topic",
+          "settings": {
+            "title": "Orders"
+          }
+        },
+        "q_1_1": {
+          "type": "question",
+          "settings": {
+            "question": "How do I place an order?",
+            "answer": "<p>Add the products you like to the cart and click <strong>Continue to payment</strong>. You can pay as a guest or with your account, and you'll receive a confirmation email with your order number.</p>",
+            "open": true
+          }
+        },
+        "q_1_2": {
+          "type": "question",
+          "settings": {
+            "question": "Can I change or cancel my order?",
+            "answer": "<p>Yes, as long as it hasn't been dispatched. Write to us as soon as possible with your order number and we'll update or cancel it.</p>",
+            "open": false
+          }
+        },
+        "q_1_3": {
+          "type": "question",
+          "settings": {
+            "question": "How do pack discounts work?",
+            "answer": "<p>Build a pack of 3, 5, 8 or 10 products in <strong>Build your pack</strong> and save 5%, 10%, 15% or 20% on the whole pack. You can see the saving in the pack summary before adding it to the cart.</p>",
+            "open": false
+          }
+        },
+        "q_1_4": {
+          "type": "question",
+          "settings": {
+            "question": "Do you offer gifts and corporate orders?",
+            "answer": "<p>Yes. We prepare gift sets and corporate orders for teams and clients. Contact us and tell us the number of gifts and your budget.</p>",
+            "open": false
+          }
+        },
+        "topic_2": {
+          "type": "topic",
+          "settings": {
+            "title": "Shipping & delivery times"
+          }
+        },
+        "q_2_1": {
+          "type": "question",
+          "settings": {
+            "question": "Where do you ship?",
+            "answer": "<p>We ship to all provinces and territories of Canada.</p>",
+            "open": false
+          }
+        },
+        "q_2_2": {
+          "type": "question",
+          "settings": {
+            "question": "How long does delivery take?",
+            "answer": "<p>Orders placed before 14:00 (ET) on business days are dispatched the same day. <strong>Express shipping</strong> takes 1–3 business days and <strong>free shipping</strong> 7–20 days.</p>",
+            "open": false
+          }
+        },
+        "q_2_3": {
+          "type": "question",
+          "settings": {
+            "question": "How much does shipping cost?",
+            "answer": "<p>Shipping is free on orders over 80 CAD. Express shipping costs 5 CAD.</p>",
+            "open": false
+          }
+        },
+        "q_2_4": {
+          "type": "question",
+          "settings": {
+            "question": "How can I track my order?",
+            "answer": "<p>When your order is dispatched you'll receive an email with the tracking number and a link to follow the delivery.</p>",
+            "open": false
+          }
+        },
+        "topic_3": {
+          "type": "topic",
+          "settings": {
+            "title": "Product storage"
+          }
+        },
+        "q_3_1": {
+          "type": "question",
+          "settings": {
+            "question": "How do you keep cheese and charcuterie fresh during shipping?",
+            "answer": "<p>Chilled products travel in thermal packaging with cold packs, so they arrive in perfect condition even in summer.</p>",
+            "open": false
+          }
+        },
+        "q_3_2": {
+          "type": "question",
+          "settings": {
+            "question": "How should I store cured ham and sausages?",
+            "answer": "<p>Keep them in a cool, dry place or in the fridge once opened. Take them out 15–20 minutes before serving to enjoy all their aroma.</p>",
+            "open": false
+          }
+        },
+        "q_3_3": {
+          "type": "question",
+          "settings": {
+            "question": "How should I store cheese?",
+            "answer": "<p>Wrap cheese in wax or baking paper and keep it in the vegetable drawer of the fridge. Serve it at room temperature.</p>",
+            "open": false
+          }
+        },
+        "q_3_4": {
+          "type": "question",
+          "settings": {
+            "question": "How long do tinned fish and conservas last?",
+            "answer": "<p>Unopened tins keep for years in a cool place — check the best-before date on each one. Once opened, store them in the fridge and eat them within two days.</p>",
+            "open": false
+          }
+        },
+        "topic_4": {
+          "type": "topic",
+          "settings": {
+            "title": "Payments"
+          }
+        },
+        "q_4_1": {
+          "type": "question",
+          "settings": {
+            "question": "Which payment methods do you accept?",
+            "answer": "<p>Visa, Mastercard, PayPal, Apple Pay, Google Pay and Revolut.</p>",
+            "open": false
+          }
+        },
+        "q_4_2": {
+          "type": "question",
+          "settings": {
+            "question": "Is it safe to pay on your website?",
+            "answer": "<p>Yes. Payments are processed by Shopify's secure checkout with SSL encryption; we never see or store your card details.</p>",
+            "open": false
+          }
+        },
+        "q_4_3": {
+          "type": "question",
+          "settings": {
+            "question": "Are taxes included in the prices?",
+            "answer": "<p>Taxes are calculated according to your province and are always shown before you pay.</p>",
+            "open": false
+          }
+        },
+        "topic_5": {
+          "type": "topic",
+          "settings": {
+            "title": "Returns"
+          }
+        },
+        "q_5_1": {
+          "type": "question",
+          "settings": {
+            "question": "Can I return a product?",
+            "answer": "<p>Unopened non-perishable products can be returned within 30 days of delivery. For hygiene reasons, chilled and fresh products can't be returned unless they arrive in poor condition.</p>",
+            "open": false
+          }
+        },
+        "q_5_2": {
+          "type": "question",
+          "settings": {
+            "question": "What if my order arrives damaged?",
+            "answer": "<p>Write to us within 48 hours with your order number and a photo, and we'll send a replacement or refund you.</p>",
+            "open": false
+          }
+        },
+        "q_5_3": {
+          "type": "question",
+          "settings": {
+            "question": "When will I receive my refund?",
+            "answer": "<p>Once we approve the return, the refund is issued to the original payment method within 5–10 business days.</p>",
+            "open": false
+          }
+        }
+      },
+      "block_order": [
+        "topic_1",
+        "q_1_1",
+        "q_1_2",
+        "q_1_3",
+        "q_1_4",
+        "topic_2",
+        "q_2_1",
+        "q_2_2",
+        "q_2_3",
+        "q_2_4",
+        "topic_3",
+        "q_3_1",
+        "q_3_2",
+        "q_3_3",
+        "q_3_4",
+        "topic_4",
+        "q_4_1",
+        "q_4_2",
+        "q_4_3",
+        "topic_5",
+        "q_5_1",
+        "q_5_2",
+        "q_5_3"
+      ],
+      "settings": {
+        "heading": "Frequently asked questions",
+        "intro": "<p>Everything you need to know about orders, shipping, storing your products, payments and returns.</p>",
+        "show_search": true
+      }
+    },
+    "faq_cta": {
+      "type": "text-banner",
+      "settings": {
+        "heading": "Still have questions?",
+        "uppercase_heading": true,
+        "text": "<p>Our team is happy to help. We usually reply within 24 hours on business days.</p>",
+        "button_label": "Contact us",
+        "button_link": "/pages/contact",
+        "height": 200,
+        "background": "#BE1621",
+        "text_color": "#FFFFFF",
+        "show_pattern": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "faq_cta"
+  ]
+}
